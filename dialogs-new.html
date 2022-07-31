@@ -1,0 +1,837 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="dialogs.css">
+    <script>
+        let listActorText = [
+            "¿Y tú que quieres, novato?",
+            "Pues felicidades. Yo soy ${ACTOR}, el cazador. Piérdete y déjame en paz",
+            "¿Y a tí que te importa?",
+            "¿Escapar? Solo se puede salir de aquí muerto. En eso sí podría ayudarte",
+            "¡Pero que gracioso eres, novato! Yo soy ${ACTOR}, el cazador. ¡Me caes bien!",
+            "¡Tu de nuevo, ${PLAYER}!. Dime, ¿como te va?",
+            "Pues no se, en alguna posada supongo ¿Oye, te vienes mañana a cazar?"
+        ];
+        let listPlayerText = [
+            "Me llamo ${PLAYER}, encantado de saludarte",
+            "¿Como te llamas?",
+            "Quiero tu ayuda para escapar de aquí",
+            "No me llames novato. Me llamo ${PLAYER}, y yo no te he faltado al respeto",
+            "Algo mal, no se donde alojarme",
+            "Bien! Oye, me gustaría ir mañana contigo a cazar",
+            "Oye, esta ${ACTOR:ELVIRA} es rarita, ¿no?",
+            "Oye, esa chica, ${ACTOR:HELLEN}, ¿vive con alguien?",
+            "Oye, ¿${ACTOR:PANDORA} qué es?",
+            "¿Me dejarías quedarme en tu casa?",
+            "¿En la posada de ${ACTOR:ELVIRA}?",
+            "¡A cazar! Buena idea ¿Cuando y donde quedamos?",
+            "No me gusta la caza ni el sufrimiento animal"
+        ];
+
+        let uiDialogController = null;
+
+        let refActorNpg = "npg";
+        let refActorPlayer = "player";
+
+        let ulElemActor;
+        let ulElemPlayer;
+        let divCenter;
+
+        class DialogSentence {
+            refActor = null;
+            idSentence = null;
+            textSentence = "";
+
+            constructor(refActor, idSentence, textSentence) {
+                this.refActor = refActor;
+                this.idSentence = idSentence;
+                this.textSentence = textSentence;
+            }
+        }
+        class DialogTreeNode {
+            idDialogNode = null;
+            idDialogParent = null;
+            dialogSentence = null;
+            listDialogTreeReplies = [];
+
+            constructor(idDialogNode, dialogSentence) {
+                this.idDialogNode = idDialogNode;
+                this.dialogSentence = dialogSentence;
+            }
+
+            getRefActor() {
+                return this.dialogSentence.refActor;
+            }
+
+            toJson(idDialogParent) {
+                let strRet = "";
+                let strConditions = "";
+                let replyOptions = "";
+                for (i = 0; i < this.listDialogTreeReplies.length; i++) {
+                    let dialogReply = this.listDialogTreeReplies[i];
+                    let jsonReply = "{" + "\"idDialogNode\": \"" + dialogReply.idDialogNode + "\", \"idDialogSentence\": \"" + dialogReply.dialogSentence.idSentence + "\", \"textSentence\": \"" + dialogReply.dialogSentence.textSentence + "\"}";
+                    if (i > 0) replyOptions += ",";
+                    replyOptions += jsonReply;
+                }
+
+                if (idDialogParent != null) strConditions = "\"conditionsAnd\": [{\"idDialogPrev\": \"" + idDialogParent + "\"}],";
+                else strConditions = "\"conditionsAnd\": [{\"NEXT\": \"\"}],";
+
+                strRet = "{" + strConditions + "\"idDialogNode\": \"" + this.idDialogNode + "\", \"idDialogSentence\": \"" + this.dialogSentence.idSentence + "\", \"textSentence\": \"" + this.dialogSentence.textSentence + "\", " +
+                    "\"replyOptions\": [" + replyOptions + "]" +
+                    "}";
+
+                return strRet;
+            }
+        }
+        class DialogTree {
+            listIdDialogTreeRoots = [];
+            mapDialogTreeNodes = new Map();
+
+            clear() {
+                this.listIdDialogTreeRoots = [];
+                this.mapDialogTreeNodes = new Map();
+            }
+
+            addSentenceReply(id, idDialogParent, dialogSentence) {
+                var dialogTreeNode = new DialogTreeNode(id, dialogSentence);
+                var dialogTreeParent = this.mapDialogTreeNodes.get(idDialogParent);
+                if (dialogTreeParent != null) {
+                    dialogTreeNode.idDialogParent = dialogTreeParent.idDialogNode;
+                    dialogTreeParent.listDialogTreeReplies.push(dialogTreeNode);
+                    this.mapDialogTreeNodes.set(dialogTreeNode.idDialogNode, dialogTreeNode);
+                    return dialogTreeNode;
+                } else {
+                    if (idDialogParent == null) {
+                        this.mapDialogTreeNodes.set(dialogTreeNode.idDialogNode, dialogTreeNode);
+                        this.listIdDialogTreeRoots.push(dialogTreeNode.idDialogNode);
+                        return dialogTreeNode;
+                    }
+                }
+                return null;
+            }
+
+            getTreeNode(idDialogNode) {
+                if (idDialogNode == null) {
+                    if (this.listIdDialogTreeRoots.length > 0) return this.listIdDialogTreeRoots[0];
+                    return null;
+                }
+                var dialogTreeNode = this.mapDialogTreeNodes.get(idDialogNode);
+                return dialogTreeNode;
+            }
+
+            getListIdsDialogTreeReplies(idDialogNode) {
+                var listIdsDialogReplies = [];
+
+                var dialogTreeNode = this.getTreeNode(idDialogNode);
+                if (dialogTreeNode != null) {
+                    for (var i = 0; i < dialogTreeNode.listDialogTreeReplies.length; i++) {
+                        listIdsDialogReplies.push(dialogTreeNode.listDialogTreeReplies[i].idDialogNode);
+                    }
+                }
+                return listIdsDialogReplies;
+            }
+
+            getListIdsDialogTreeBrothers(idDialogNode) {
+                var dialogTreeNode = this.getTreeNode(idDialogNode);
+                if (dialogTreeNode != null) {
+                    if (dialogTreeNode.idDialogParent != null) {
+                        return this.getListIdsDialogTreeReplies(dialogTreeNode.idDialogParent);
+                    } else return this.listIdDialogTreeRoots;
+                }
+                return [];
+            }
+        }
+
+        class UIPanelSentences {
+            refActor = null;
+            ulElem = null;
+            elemParent = null;
+            mapSentences = new Map();
+
+            constructor(ulElem, refActor) {
+                this.ulElem = ulElem;
+                this.elemParent = ulElem.parentElement;
+                this.refActor = refActor;
+            }
+
+            clear() {
+                this.mapSentences.clear();
+                this.ulElem.innerHTML = "";
+            }
+
+            createDialogSentence(text) {
+                return this.createDialogSentenceWithId(uuid(), text);
+            }
+
+            createDialogSentenceWithId(id, text) {
+                var dialogSentence = new DialogSentence(this.refActor, id, text);
+                this.mapSentences.set(dialogSentence.idSentence, dialogSentence);
+                return dialogSentence;
+            }
+
+            filterPanelSentences(textFilter) {
+                let i = 0;
+                for (const [idSentence, dialogSentence] of this.mapSentences.entries()) {
+                    var divElem = document.getElementById("LIST-" + idSentence);
+                    if (dialogSentence.textSentence.includes(textFilter)) divElem.style.display = "block";
+                    else divElem.style.display = "none";
+                    i++;
+                }
+            }
+
+            disable() {
+                this.elemParent.className = "disabled";
+            }
+
+            enable() {
+                this.elemParent.className = "";
+            }
+        }
+
+        class UIDialogController {
+            uiPanelSentencesNpg = null;
+            uiPanelSentencesPlayer = null;
+
+            dialogTree = new DialogTree();
+
+            idDialogTreeNodeSelected = null;
+
+            constructor() {
+                ulElemActor = document.getElementById("ulListActor");
+                ulElemPlayer = document.getElementById("ulListPlayer");
+                divCenter = document.getElementById("content-dialog");
+
+                this.uiPanelSentencesNpg = new UIPanelSentences(ulElemActor, refActorNpg);
+                this.uiPanelSentencesPlayer = new UIPanelSentences(ulElemPlayer, refActorPlayer);
+                this.uiPanelSentencesPlayer.disable();
+            }
+
+            clear() {
+                divCenter.innerHTML = "";
+
+                this.dialogTree.clear();
+                this.uiPanelSentencesNpg.clear();
+                this.uiPanelSentencesPlayer.clear();
+                this.uiPanelSentencesNpg.enable();
+                this.uiPanelSentencesPlayer.disable();
+            }
+
+            changeEnabledUiPanelSentences(refActor) {
+                if (this.uiPanelSentencesNpg.refActor == refActor) {
+                    this.uiPanelSentencesNpg.disable();
+                    this.uiPanelSentencesPlayer.enable();
+                } else {
+                    this.uiPanelSentencesNpg.enable();
+                    this.uiPanelSentencesPlayer.disable();
+                }
+            }
+
+            resetDialog() {
+                ulElemActor.innerHTML = '';
+                ulElemPlayer.innerHTML = '';
+            }
+
+            createNpgPanelSentence(text) {
+                var dialogSentence = this.uiPanelSentencesNpg.createDialogSentence(text);
+                this.buildLateralPanel(ulElemActor, dialogSentence, false);
+            }
+
+
+            createNpgPanelSentenceWithId(id, text) {
+                var dialogSentence = this.uiPanelSentencesNpg.createDialogSentenceWithId(id, text);
+                this.buildLateralPanel(ulElemActor, dialogSentence, false);
+            }
+
+            createPlayerPanelSentence(text) {
+                var dialogSentence = this.uiPanelSentencesPlayer.createDialogSentence(text);
+                this.buildLateralPanel(ulElemPlayer, dialogSentence, true);
+            }
+
+            createPlayerPanelSentenceWithId(id, text) {
+                var dialogSentence = this.uiPanelSentencesPlayer.createDialogSentenceWithId(id, text);
+                this.buildLateralPanel(ulElemPlayer, dialogSentence, true);
+            }
+
+            addDialogReply(idDialogReply, dialogSentence) {
+                var dialogTreeReply = this.dialogTree.getTreeNode(idDialogReply);
+                if (dialogTreeReply != null || idDialogReply == null) {
+                    var dialogTreeNode = this.dialogTree.addSentenceReply(uuid(), idDialogReply, dialogSentence);
+                    return dialogTreeNode;
+                }
+                return null;
+            }
+
+            showDialogTreeNode(dialogTreeNode, alignRight, expand) {
+                var divDialogNode = document.createElement("div");
+                divDialogNode.id = dialogTreeNode.idDialogNode;
+                divDialogNode.appendChild(document.createTextNode(dialogTreeNode.dialogSentence.textSentence));
+                if (alignRight) divDialogNode.setAttribute("align", "right");
+                divCenter.appendChild(divDialogNode);
+
+                divDialogNode.addEventListener('click', function(ev) {
+                    if (ev.target) {
+                        var divDialogNode = ev.target;
+                        uiDialogController.selectOffDialogTreeNode(uiDialogController.idDialogTreeNodeSelected);
+                        uiDialogController.selectOnDialogTreeNode(divDialogNode.id);
+                        uiDialogController.selectOffDialogTreeBrothers(divDialogNode.id);
+
+                        uiDialogController.removeDialogPanelTo(divDialogNode.id);
+                        uiDialogController.showDialogTreeReplies(divDialogNode.id);
+                    }
+                });
+            }
+
+            selectOnDialogTreeNode(idDialogNode) {
+                var dialogTreeSelected = this.dialogTree.getTreeNode(idDialogNode);
+                if (dialogTreeSelected != null) {
+                    var divDialogNode = document.getElementById(dialogTreeSelected.idDialogNode);
+                    if (divDialogNode != null) {
+                        divDialogNode.style.color = "blue";
+                        divDialogNode.style.fontWeight = "bold";
+
+                        this.idDialogTreeNodeSelected = idDialogNode;
+                        this.changeEnabledUiPanelSentences(dialogTreeSelected.getRefActor());
+                    }
+                }
+            }
+
+            selectOffDialogTreeNode(idDialogNode) {
+                var dialogTreeSelected = this.dialogTree.getTreeNode(idDialogNode);
+                if (dialogTreeSelected != null) {
+                    var divDialogNode = document.getElementById(dialogTreeSelected.idDialogNode);
+                    if (divDialogNode != null) {
+                        divDialogNode.style.color = "black";
+                    }
+                }
+            }
+
+            selectOffDialogTreeBrothers(idDialogNode) {
+                var listIdsDialogBrothers = this.dialogTree.getListIdsDialogTreeBrothers(idDialogNode);
+                for (var i = 0; i < listIdsDialogBrothers.length; i++) {
+                    var idDialogBrother = listIdsDialogBrothers[i];
+                    if (idDialogBrother != idDialogNode) {
+                        var divDialogBrother = document.getElementById(idDialogBrother);
+                        if (divDialogBrother != null) {
+                            divDialogBrother.style.color = "black";
+                            divDialogBrother.style.fontWeight = "normal";
+                        }
+                    }
+                }
+            }
+
+
+            buildLateralPanel(elemPanel, dialogSentence, alignRight) {
+                var idSentence = dialogSentence.idSentence;
+                var textSentence = dialogSentence.textSentence;
+
+                var item = document.createElement('li');
+
+                var divLine = item.appendChild(document.createElement("div"));
+                divLine.id = "LIST-" + dialogSentence.idSentence;
+                divLine.style.cssText = "display:inline";
+                var divText = divLine.appendChild(document.createElement("div"));
+                divText.style.cssText = "display:inline";
+                var divArrow = divLine.appendChild(document.createElement("div"));
+                divArrow.style.cssText = "display:inline";
+
+                divText.appendChild(document.createTextNode(textSentence));
+                divText.dialogSentence = dialogSentence;
+                divText.idSentence = idSentence;
+
+                divArrow.appendChild(document.createTextNode(" > "));
+                divArrow.dialogSentence = dialogSentence;
+                divArrow.textShow = textSentence;
+
+                divArrow.addEventListener('click', function(e) {
+                    if (e.target) {
+                        var dialogTreeNode = uiDialogController.addDialogReply(uiDialogController.idDialogTreeNodeSelected, e.currentTarget.dialogSentence);
+                        uiDialogController.showDialogTreeNode(dialogTreeNode, alignRight, false);
+                    }
+                });
+
+                elemPanel.appendChild(item);
+            }
+
+            getListdDivDialogNodesReverse() {
+                var listNodes = [];
+                var childDivs = divCenter.getElementsByTagName('div');
+
+                for (var i = childDivs.length; i > 0; i--) {
+                    listNodes.push(childDivs[i - 1]);
+                }
+                return listNodes;
+            }
+
+            removeDialogPanelTo(idDialogNode) {
+                var listDivDialogNodes = this.getListdDivDialogNodesReverse();
+                var listLimitIdsDialogNodes = this.dialogTree.getListIdsDialogTreeBrothers(idDialogNode);
+
+                for (var i = 0; i < listDivDialogNodes.length; i++) {
+                    var divElem = listDivDialogNodes[i];
+                    if (listLimitIdsDialogNodes.includes(divElem.id)) return;
+
+                    divCenter.removeChild(divElem);
+                }
+            }
+
+            showDialogTreeReplies(idDialogNode) {
+                var alignRightChilds = false;
+                var dialogNode = this.dialogTree.getTreeNode(idDialogNode);
+                if (dialogNode != null) {
+                    if (dialogNode.getRefActor() == refActorNpg) alignRightChilds = true;
+
+                    for (var i = 0; i < dialogNode.listDialogTreeReplies.length; i++) {
+                        var dialogReplyNode = dialogNode.listDialogTreeReplies[i];
+                        this.showDialogTreeNode(dialogReplyNode, alignRightChilds, false);
+                    }
+                }
+            }
+
+
+            // ********************************************************************************************************************* //
+            // JSON Build
+
+            buildDialogJSON() {
+                let strDialogSW = "\"dialogSW\": \"www.livedialogs.com\"";
+                let strDialogVersion = "\"dialogVersion\": \"0.0.1\"";
+                let strPrj = "\"refPrj\": \"" + document.getElementById("text-prj").value + "\"";
+                let strPrjVersion = "\"versionPrj\": \"0.0.1\"";
+                let strPage = "\"page\": \"" + document.getElementById("text-page").value + "\"";
+                let strActorNpg = "\"refActorNpg\": \"" + document.getElementById("text-npgActor").value + "\"";
+                let strActorPlayer = "\"refActorPlayer\": \"" + document.getElementById("text-playerActor").value + "\"";
+                let strNpgSentences = this.buildNpgDialogsJson();
+                let strPlayerSentences = this.buildPlayerDialogsJson();
+                return "{ " +
+                    strDialogSW + ",\n" +
+                    strDialogVersion + ",\n" +
+                    strPrj + ",\n" +
+                    strPrjVersion + ",\n" +
+                    strPage + ",\n" +
+                    strActorNpg + ",\n" +
+                    strActorPlayer + ",\n" +
+                    strNpgSentences + ",\n" +
+                    strPlayerSentences + ",\n" +
+                    this.buildDialogThreadsJson(refActorNpg, true) +
+                    ",\n" + this.buildDialogThreadsJson(refActorPlayer, false) +
+                    " }";
+            }
+
+            buildNpgDialogsJson() {
+                let strActorDialogs = "";
+                let i = 0;
+                for (const [key, value] of this.uiPanelSentencesNpg.mapSentences.entries()) {
+                    if (i > 0) strActorDialogs += ",\n";
+                    strActorDialogs += "{ \"id\": \"" + key + "\", \"text\": \"" + value.textSentence + "\"}";
+                    i++;
+                }
+                strActorDialogs = "\"npgSentences\": [" + strActorDialogs + "]";
+                return strActorDialogs;
+            }
+
+            buildPlayerDialogsJson() {
+                let strPlayerDialogs = "";
+                let i = 0;
+                for (const [key, value] of this.uiPanelSentencesPlayer.mapSentences.entries()) {
+                    if (i > 0) strPlayerDialogs += ",\n";
+                    strPlayerDialogs += "{ \"id\": \"" + key + "\", \"text\": \"" + value.textSentence + "\"}";
+                    i++;
+                }
+                strPlayerDialogs = "\"playerSentences\": [" + strPlayerDialogs + "]";
+                return strPlayerDialogs;
+            }
+
+            buildDialogActorJson(refActor, isNpg) {
+                var jsonActor = "";
+
+                if (isNpg) jsonActor += "\"actorDialogNpg\": ";
+                else jsonActor += "\"actorDialogPlayer\": ";
+                jsonActor += "{ \"refActor\": \"" + refActor + "\", " + this.buildDialogThreadsJson(refActor) + "}";
+
+                return jsonActor;
+            }
+
+            buildDialogThreadsJson(refActor, isNpg) {
+                var jsonActor = "";
+                if (isNpg) jsonActor += "\"npgDialog\": ";
+                else jsonActor += "\"playerDialog\": ";
+
+                let jsonDialogs = "";
+                let i = 0;
+
+                for (var j = 0; j < this.dialogTree.listIdDialogTreeRoots.length; j++) {
+                    var dialogNode = this.dialogTree.getTreeNode(this.dialogTree.listIdDialogTreeRoots[j]);
+                    if (dialogNode.getRefActor() == refActor) {
+                        if (i > 0) jsonDialogs += ",\n";
+                        jsonDialogs += dialogNode.toJson(null);
+                        i++;
+                    }
+                }
+
+                for (const [key, dialogNode] of this.dialogTree.mapDialogTreeNodes.entries()) {
+                    if (dialogNode.getRefActor() != refActor) {
+                        var listDialogReplies = dialogNode.listDialogTreeReplies;
+                        for (var r = 0; r < listDialogReplies.length; r++) {
+                            var dialogReply = listDialogReplies[r];
+                            if (i > 0) jsonDialogs += ",\n";
+                            jsonDialogs += dialogReply.toJson(dialogNode.idDialogNode);
+                            i++;
+                        }
+                    }
+                }
+                return jsonActor + "[ " + jsonDialogs + " ]";
+            }
+        }
+
+        function uuid() {
+            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            );
+        }
+
+        function start() {
+            uiDialogController = new UIDialogController();
+            uiDialogController.resetDialog();
+
+            for (i = 0; i < listActorText.length; i++) {
+                uiDialogController.createNpgPanelSentence(listActorText[i]);
+            }
+
+            for (i = 0; i < listPlayerText.length; i++) {
+                uiDialogController.createPlayerPanelSentence(listPlayerText[i]);
+            }
+        }
+
+        function addNpgSentence() {
+            var inputText = document.getElementById("text-actor").value;
+            var ulElem = document.getElementById("ulListActor");
+            uiDialogController.createNpgPanelSentence(inputText);
+        }
+
+        function addPlayerSentence() {
+            var inputText = document.getElementById("text-player").value;
+            var ulElem = document.getElementById("ulListPlayer");
+            uiDialogController.createPlayerPanelSentence(inputText);
+        }
+
+        function filterNpgSentences(event) {
+            var inputText = event.target.value;
+            uiDialogController.uiPanelSentencesNpg.filterPanelSentences(inputText);
+        }
+
+        function filterPlayerSentences(event) {
+            var inputText = event.target.value;
+            uiDialogController.uiPanelSentencesPlayer.filterPanelSentences(inputText);
+        }
+
+        function clearAll() {
+            uiDialogController.clear();
+        }
+
+        function buildDialogJSON() {
+            var jsonStr = uiDialogController.buildDialogJSON();
+            console.log("JSON:\n " + jsonStr);
+
+            var modal = document.getElementById("modalJson");
+            var modalContent = document.getElementById("modalJsonContent");
+            var modalArea = document.getElementById("modalJsonArea");
+            modalArea.innerHTML = JSON.stringify(JSON.parse(jsonStr), undefined, 4);
+            modal.style.display = "block";
+        }
+
+        class DialogJsonBuilder {
+            uiDialogControll = null;
+            jsonObjContent = null;
+
+            dialogTree = new DialogTreeMini();
+
+            constructor(uiDialogController) {
+                this.uiDialogController = uiDialogController;
+            }
+
+            buildDialogs(jsonContent) {
+                this.jsonObjContent = new JsonObjectParser();
+                this.jsonObjContent.buildByJson(jsonContent);
+
+                this.buildDialogSentences();
+                this.buildDialogActor("npgDialog");
+                this.buildDialogActor("playerDialog");
+            }
+
+            buildDialogSentences() {
+                this.buildDialogSentencesNpg();
+                this.buildDialogSentencesPlayer();
+            }
+
+            buildDialogSentencesNpg() {
+                var jsonSentencesParser = new JsonObjectParser();
+                jsonSentencesParser.buildByObject(this.jsonObjContent.getField("npgSentences"));
+
+                for (var i = 0; i < jsonSentencesParser.getArrayObjects().length; i++) {
+                    // console.log("- Sentence: ["+ i + "] = "+ jsonSentencesParser.getArrayObjects()[i]);
+                    var jsonSentenceObj = new JsonObjectParser().buildByObject(jsonSentencesParser.getArrayObjects()[i]);
+                    uiDialogController.createNpgPanelSentenceWithId(jsonSentenceObj.getField("id"), jsonSentenceObj.getField("text"));
+                }
+            }
+
+            buildDialogSentencesPlayer() {
+                var jsonSentencesParser = new JsonObjectParser();
+                jsonSentencesParser.buildByObject(this.jsonObjContent.getField("playerSentences"));
+
+                for (var i = 0; i < jsonSentencesParser.getArrayObjects().length; i++) {
+                    // console.log("- Sentence: ["+ i + "] = "+ jsonSentencesParser.getArrayObjects()[i]);
+                    var jsonSentenceObj = new JsonObjectParser().buildByObject(jsonSentencesParser.getArrayObjects()[i]);
+                    uiDialogController.createPlayerPanelSentenceWithId(jsonSentenceObj.getField("id"), jsonSentenceObj.getField("text"));
+                }
+            }
+
+            buildDialogActor(refActor) {
+                var jsonDialogParser = new JsonObjectParser();
+                jsonDialogParser.buildByObject(this.jsonObjContent.getField(refActor));
+
+                for (var i = 0; i < jsonDialogParser.getArrayObjects().length; i++) {
+                    var jsonDialogObj = new JsonObjectParser().buildByObject(jsonDialogParser.getArrayObjects()[i]);
+
+                    var idDialogElem = jsonDialogObj.getField("idDialogNode");
+                    var dialogElem = this.dialogTree.instanceDialogElem(idDialogElem);
+                    dialogElem.setSentenceId(jsonDialogObj.getField("idDialogSentence"));
+                    console.log("- Dialog: [" + i + "] = " + dialogElem.idDialog);
+
+                    var jsonDialogReplies = new JsonObjectParser().buildByObject(jsonDialogObj.getField("replyOptions"));
+                    for (var r = 0; r < jsonDialogReplies.getArrayObjects().length; r++) {
+                        var jsonReplyObj = new JsonObjectParser().buildByObject(jsonDialogReplies.getArrayObjects()[r]);
+                        var idDialogChild = jsonReplyObj.getField("idDialogNode");
+                        var dialogChild = this.dialogTree.instanceDialogElem(idDialogChild);
+                        dialogElem.addChildId(idDialogChild);
+                        dialogChild.setParentId(idDialogElem);
+                        console.log("  -> Child: [" + r + "] = " + dialogChild.idDialog);
+                    }
+                    // uiDialogController.createPlayerPanelSentenceWithId(jsonDialogObj.getField("id"), );			
+                }
+            }
+        }
+
+        /*
+        class DialogTreeMini {
+        	mapDialogElems = new Map();
+        	
+        	instanceDialogElem(idDialogElem) {
+        		var dialogElem = this.mapDialogElems.get(idDialogElem);
+        		if (dialogElem == null) dialogElem = new DialogElem(idDialogElem); // jsonDialogObj.getField("textSentence")
+        		this.mapDialogElems.set(idDialogElem, dialogElem);
+        		return dialogElem;
+        	}
+        }
+		
+        class DialogElem {
+        	idParent = null;
+        	idDialog = null;
+        	listChildsIds = [];
+        	idSentence = null;
+        	
+        	constructor(id) {
+        		this.idDialog = id;
+        	}
+        	
+        	setParentId(idParent) {
+        		this.idParent = idParent;
+        	}
+        	
+        	addChildId(idDialogChild) {
+        		this.listChildsIds.push(idDialogChild);
+        	}
+        	
+        	setSentenceId(idSentence) {
+        		this.idSentence = idSentence;
+        	}
+        }
+        */
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                let fr = new FileReader();
+                fr.onload = x => resolve(fr.result);
+                fr.readAsText(file);
+            })
+        }
+
+        async function read(input) {
+            // msg.innerText = await readFile(input.files[0]);
+
+            var jsonContentLoaded = await readFile(input.files[0]);
+
+            var dialogBuilder = new DialogJsonBuilder(uiDialogController);
+            dialogBuilder.buildDialogs(jsonContentLoaded);
+
+            /*
+            var jsonObjParser = new JsonObjectParser();
+            jsonObjParser.buildByJson(jsonContentLoaded);
+			
+            console.log("- TO Iterate.");
+            console.log(" * refActorNpg = "+ jsonObjParser.getField("refActorNpg"));
+            for (const [key, value] of jsonObjParser.iteratorEntries()) {
+            	console.log("- Iterate: "+ key + " : "+ jsonObjParser.getField(key));
+            }
+			
+            var jsonSentencesParser = new JsonObjectParser();
+            jsonSentencesParser.buildByObject(jsonObjParser.getField("npgSentences"));
+
+            for (var i = 0; i < jsonSentencesParser.getArrayObjects().length; i++) {
+            	console.log("- Sentence: ["+ i + "] = "+ jsonSentencesParser.getArrayObjects()[i]);
+            	var jsonSentenceObj = new JsonObjectParser().buildByObject(jsonSentencesParser.getArrayObjects()[i]);
+            	uiDialogController.createNpgPanelSentenceWithId(jsonSentenceObj.getField("id"), jsonSentenceObj.getField("text"));			
+            }
+
+            // var obj = JSON.parse(jsonContentLoaded);
+            // printValues(obj);
+            */
+        }
+
+        // Define recursive function to print nested values
+        /*
+        function printValues(obj) {
+        	var keys = Object.keys(obj);
+        	for (var i in keys) {
+        		console.log(" > key("+ i +"): "+ keys[i]);
+        	}
+        	for(var k in obj) {
+        		if(obj[k] instanceof Object) {
+        			var keys = Object.keys(obj[k]);
+        			for (var i in keys) {
+        				console.log(" > key("+ i +"): "+ keys[i].Name);
+        			}
+        			console.log(" > obj > "+ obj[k] + " / name = "+ obj[k].constructor.name + " / key = "+ keys[0]);
+        			printValues(obj[k]);
+        		} else {
+        			console.log(" > log > "+ obj[k] + " --- "+ obj + " --- "+ obj.Name);
+        			// document.write(obj[k] + "<br>");
+        		};
+        	}
+        };
+        */
+
+        class JsonObjectParser {
+            objJson = null;
+            mapKeyValues = new Map();
+            listObjects = [];
+
+            buildByJson(jsonDoc) {
+                this.buildByObject(JSON.parse(jsonDoc));
+            }
+
+            buildByObject(objJson) {
+                this.objJson = objJson;
+                if (Array.isArray(this.objJson)) {
+                    for (var i = 0; i < this.objJson.length; i++) {
+                        this.listObjects.push(this.objJson[i]);
+                        // console.log(" > JsonObjectParser.array: ["+ i +"] = "+ this.objJson[i]);
+                    }
+                } else {
+                    var keys = Object.keys(this.objJson);
+                    for (var key in keys) {
+                        this.mapKeyValues.set(keys[key], this.objJson[keys[key]]);
+                        // console.log(" > JsonObjectParser.map: "+ key +" : "+ keys[key] + " = "+ this.objJson[keys[key]]);
+                    }
+                }
+                return this;
+            }
+
+            getField(name) {
+                return this.mapKeyValues.get(name);
+            }
+
+            getArrayObjects() {
+                return this.listObjects;
+            }
+
+            iteratorEntries() {
+                // for (const [key, value] of this.mapKeyValues.entries()) { ... }
+                return this.mapKeyValues.entries();
+            }
+        }
+    </script>
+    <style type="text/css">
+        #content {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        
+        #content-left {
+            width: 35%;
+        }
+        
+        #content-center {
+            width: 35%;
+        }
+        
+        #content-right {
+            width: 30%;
+        }
+        
+        .disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body onload="start()">
+
+    <div>
+        <strong>Proyecto</strong><input type="text" id="text-prj" maxlength="100" size="50"> <br>
+        <strong>Página</strong><input type="text" id="text-page" maxlength="100" size="50"> <br><br>
+        <strong>Actor NPG</strong><input type="text" id="text-npgActor" value="Elvira" maxlength="100" size="50"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <strong>Actor Player</strong><input type="text" id="text-playerActor" value="Ramoncín" maxlength="100" size="50"><br>
+        <br>
+        <a href="javascript:void(0)" onclick="clearAll();">(CLEAR)</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <strong>Cargar fichero</strong>: <input type="file" onchange="read(this)" />
+        <h3>Content:</h3><pre id="msg"></pre>
+        <p>
+    </div>
+
+    <div id="content">
+        <div id="content-left" align="left">
+            <strong>Sentencias del actor</strong>
+            <ul id="ulListActor">
+                <li>Yo digo tal</li>
+                <li>I ara pasacual</li>
+            </ul>
+            <input type="text" id="text-actor" name="text-actor" maxlength="100" size="50" onInput="filterNpgSentences(event)">
+            <a href="javascript:void(0)" onclick="addNpgSentence();">+</a>
+        </div>
+
+        <div id="content-center" align="left">
+            <strong>Diálogo combinado</strong><br><br>
+            <div id="content-dialog" align="left">
+            </div>
+            <p>
+                <input type="button" value="JSON" onclick="buildDialogJSON();">
+            </p>
+        </div>
+
+        <div id="content-right" align="left">
+            <strong>Sentencias del jugador</strong>
+            <ul id="ulListPlayer">
+                <li>Esta es mi respuesta</li>
+                <li>O bien es esta otra</li>
+            </ul>
+            <input type="text" id="text-player" name="text-player" maxlength="100" size="50" onInput="filterPlayerSentences(event)">
+            <a href="javascript:void(0)" onclick="addPlayerSentence();">+</a>
+        </div>
+    </div>
+
+    <div id="modalJson" class="modal">
+        <!-- Modal content -->
+        <div class="modal-content">
+            <span class="close" onclick="event.target.parentElement.parentElement.style.display = 'none'">&times;</span>
+            <span class="copy" onclick="copyTo();">&#9744;</span>
+            <p id="modalJsonContent">Dialog JSON:</p>
+            <textarea id="modalJsonArea" name="textarea" rows="30" cols="120">Write something here</textarea>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

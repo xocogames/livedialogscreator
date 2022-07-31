@@ -1,0 +1,693 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="dialogs.css">
+	<script>
+		let listActorText = [
+			"¿Y tú que quieres, novato?", 
+			"Pues felicidades. Yo soy ${ACTOR}, el cazador. Piérdete y déjame en paz", 
+			"¿Y a tí que te importa?",
+			"¿Escapar? Solo se puede salir de aquí muerto. En eso sí podría ayudarte",
+			"¡Pero que gracioso eres, novato! Yo soy ${ACTOR}, el cazador. ¡Me caes bien!",
+			"¡Tu de nuevo, ${PLAYER}!. Dime, ¿como te va?",
+			"Pues no se, en alguna posada supongo ¿Oye, te vienes mañana a cazar?"
+		];
+		let listPlayerText = [
+			"Me llamo ${PLAYER}, encantado de saludarte", 
+			"¿Como te llamas?",
+			"Quiero tu ayuda para escapar de aquí",
+			"No me llames novato. Me llamo ${PLAYER}, y yo no te he faltado al respeto",
+			"Algo mal, no se donde alojarme",
+			"Bien! Oye, me gustaría ir mañana contigo a cazar",
+			"Oye, esta ${ACTOR:ELVIRA} es rarita, ¿no?",
+			"Oye, esa chica, ${ACTOR:HELLEN}, ¿vive con alguien?",
+			"Oye, ¿${ACTOR:PANDORA} qué es?",
+			"¿Me dejarías quedarme en tu casa?",
+			"¿En la posada de ${ACTOR:ELVIRA}?",
+			"¡A cazar! Buena idea ¿Cuando y donde quedamos?",
+			"No me gusta la caza ni el sufrimiento animal"
+		];
+		
+		const DLG_ACTOR = "dlg-actor:";
+		const DLG_PLAYER = "dlg-actor:";
+		
+		let dialogController = null;
+		
+		let ulElemActor;
+		let ulElemPlayer;
+		let divCenter;
+	
+		class DialogController {
+			actorDialogRoot = null;
+			actorDialogLast = null;
+			playerDialogSelectedLast = null;
+			
+			listActorDialogsById = new Map();
+			listPlayerDialogsById = new Map();
+			mapDialogThreads = new Map();
+		
+			listIdDialogsUI = [];
+			mapDialogsTree = new Map();
+			// mapDialogsUI = new Map();
+
+			constructor() {
+				ulElemActor = document.getElementById("ulListActor");
+				ulElemPlayer = document.getElementById("ulListPlayer");
+				divCenter = document.getElementById("content-dialog");
+			}
+					
+			resetTextDialogs() {
+				ulElemActor.innerHTML = '';
+				ulElemPlayer.innerHTML = '';
+			}
+			
+			createActorPanelDialog(text, build) {
+				var actorDialog = new ActorDialog(uuid(), text);
+				this.listActorDialogsById.set(actorDialog.idDialog, actorDialog);
+
+				if (build) {
+					this.buildLateralPanel(ulElemActor, actorDialog, false);
+				}
+			}
+			
+			createPlayerPanelDialog(text, build) {
+				var playerDialog = new PlayerDialog(uuid(), text);
+				this.listPlayerDialogsById.set(playerDialog.idDialog, playerDialog);
+				
+				if (build) {
+					this.buildLateralPanel(ulElemPlayer, playerDialog, true);
+				}
+			}
+
+			buildLateralPanel(elemPanel, actorDialog, isPlayerReply) {
+				var idDialog = actorDialog.idDialog;
+				var textDialog = actorDialog.textDialog;
+				
+				var item = document.createElement('li');
+
+				var divLine = item.appendChild(document.createElement("div"));
+				divLine.id = "LIST-" + actorDialog.idDialog;
+				divLine.style.cssText = "display:inline";
+				var divText = divLine.appendChild(document.createElement("div"));
+				divText.style.cssText = "display:inline";
+				var divArrow = divLine.appendChild(document.createElement("div"));
+				divArrow.style.cssText = "display:inline";
+				
+				divText.appendChild(document.createTextNode(textDialog));
+				divText.dialog = actorDialog;
+				divText.idDialog = idDialog;
+									
+				divArrow.appendChild(document.createTextNode(" > "));
+				divArrow.dialog = actorDialog;
+				divArrow.textShow = textDialog;
+				
+				divArrow.addEventListener('click',function(e){
+					if (e.target){
+						if (!isPlayerReply) {
+							var actorDialogReply = e.currentTarget.dialog.cloneVoid();
+							dialogController.addDialogActorThread(actorDialogReply);
+							dialogController.showDialogActorThread(actorDialogReply, false, false);
+						}
+						else {
+							var playerDialog = e.currentTarget.dialog.cloneVoid();
+							dialogController.addDialogPlayerThread(playerDialog);
+							dialogController.showDialogPlayerThread(playerDialog, false, false);
+						}
+					 }
+				});
+
+				elemPanel.appendChild(item);
+			}
+			
+			buildPanelDialogRoot(idDialogRoot, idDialogTo) {
+				let actorDialogRoot = this.mapDialogThreads.get(idDialogRoot);
+				console.log("fillPanelDialogThread: actorDialogRoot = "+ actorDialogRoot + " / idDialogRoot = "+ idDialogRoot);
+				if (actorDialogRoot != null) {
+					this.newDialogThread();
+					this.showDialogActorThread(actorDialogRoot, false, true);
+					// this.fillPanelDialogThread(actorDialogRoot, idDialogTo);
+				}
+			}
+
+			newDialogThread() {
+				this.listIdDialogsUI = [];
+				this.mapDialogsTree.clear();
+				// this.mapDialogsUI.clear();
+				
+				console.log("MIERDAAAAAAAAAAAAAAAAAAAAAAAAAAA map size = "+ this.mapDialogsTree.size);
+
+				
+				this.actorDialogRoot = null;
+				this.actorDialogLast = null;
+				this.playerDialogSelectedLast = null;
+				
+				divCenter.innerHTML = "";
+				
+				console.log("RESET: newDialogThread");
+			}
+			
+			setDialogThreadRoot(actorDialog) {
+				this.actorDialogRoot = actorDialog;
+				this.playerDialogSelectedLast = null;
+
+				console.log("RESET: setDialogThreadRoot");
+				
+				if (this.mapDialogThreads.get(actorDialog.idDialog) == null) {
+					this.mapDialogThreads.set(actorDialog.idDialog, actorDialog);
+					
+					var elemSelector = document.getElementById("thread-selector");
+					var option = document.createElement("option");
+					option.value = actorDialog.idDialog;
+					option.text = actorDialog.textDialog;
+					elemSelector.add(option);
+					option.selected = true;
+				}
+			}
+			
+			addDialogActorThread(actorDialog) {
+				console.log("addDialogActorThread: "+ actorDialog + " , idDialog = "+ actorDialog.idDialog); 
+				console.log("Blue Reply Player: "+ this.playerDialogSelectedLast); 
+				if (this.actorDialogRoot != null && this.playerDialogSelectedLast == null) return;
+				
+				this.actorDialogLast = actorDialog;
+				if (this.actorDialogRoot == null) this.setDialogThreadRoot(actorDialog); // this.actorDialogRoot = actorDialog; // ************ setDialogThreadRoot ***********
+				console.log("actorDialogLast: "+ this.actorDialogLast + " , idDialog = "+ this.actorDialogLast.idDialog); 
+				if (this.playerDialogSelectedLast != null) {
+					console.log("Is Reply: "+ this.playerDialogSelectedLast); 
+					this.playerDialogSelectedLast.addActorReply(actorDialog);
+				}
+				this.playerDialogSelectedLast = null;
+			}
+
+			showDialogActorThread(actorDialog, isSelected, expand) {
+				var divActorText = document.createElement("div");
+				divActorText.id = "dlg-actor:"+ actorDialog.idDialog;
+				divActorText.appendChild(document.createTextNode(actorDialog.textDialog));
+				divCenter.appendChild(divActorText);
+				
+				if (isSelected) {
+					divActorText.style.color = "blue";
+					divActorText.style.fontWeight = "bold";
+				}
+
+				this.listIdDialogsUI.push(actorDialog.idDialogTree);
+				// this.listIdDialogsUI.push(actorDialog.idDialogUI);
+				this.mapDialogsTree.set(actorDialog.idDialogTree, actorDialog);
+				// this.mapDialogsUI.set(actorDialog.idDialogUI, actorDialog);
+				
+				divActorText.addEventListener('click',function(ev){
+					if(ev.target){
+						// dialogController.playerDialogSelectedLast = ev.currentTarget.playerDialog;						
+						dialogController.showDialogThread(0, actorDialog.idDialogTree);
+					 }
+				});
+
+				var actorDialogExpand = null;
+				var countExpand = 0;
+				if (expand) {
+					for (i = 0; i < actorDialog.listPlayerReply.length; i++) {
+						let playerDialogReply = actorDialog.listPlayerReply[i];
+						this.showDialogPlayerThread(playerDialogReply, false, expand);
+						
+						if (playerDialogReply.actorDialogReply != null) {
+							actorDialogExpand = playerDialogReply.actorDialogReply;
+							countExpand++;
+						}
+					}
+				}
+				
+				var divListElem = document.getElementById("LIST-"+ actorDialog.idDialog);
+				divListElem.style.color = "gray";			
+				
+				if (actorDialogExpand != null && countExpand == 1) this.showDialogActorThread(actorDialogExpand, expand);
+			}
+
+			showDialogActorChildsThread(actorDialog) {
+				console.log("ActorDialogChils from: "+ actorDialog.idDialog +" , childs = "+ actorDialog.listPlayerReply);
+				for (let i = 0; i < actorDialog.listPlayerReply.length; i++) {
+					let playerDialogReply = actorDialog.listPlayerReply[i];
+					this.showDialogPlayerThread(playerDialogReply, false, false);
+				}
+			}
+			
+			addDialogPlayerThread(playerDialog) {
+				console.log("actorDialogLast = "+ this.actorDialogLast.idDialog);
+				if (this.actorDialogLast == null) return;				
+				this.actorDialogLast.addPlayerReply(playerDialog);
+			}
+
+			showDialogPlayerThread(playerDialog, isSelected, expand) {
+				var divActorText = document.createElement("div");
+				divActorText.id = "dlg-player:"+ playerDialog.idDialog;
+				divActorText.setAttribute("align", "right");
+				divActorText.appendChild(document.createTextNode(playerDialog.textDialog));
+				divActorText.playerDialog = playerDialog;
+				divActorText.dialogController = this;
+				divCenter.appendChild(divActorText);
+				
+				this.listIdDialogsUI.push(playerDialog.idDialogTree);
+				// this.listIdDialogsUI.push(playerDialog.idDialogUI);
+				this.mapDialogsTree.set(playerDialog.idDialogTree, playerDialog);
+				console.log("OSTIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA map size = "+ this.mapDialogsTree.size);
+				// this.mapDialogsUI.set(playerDialog.idDialogUI, playerDialog);
+
+				if (playerDialog.actorDialogReply != null) divActorText.style.fontWeight = "bold";
+				
+				if (isSelected) {
+					divActorText.style.color = "blue";
+					divActorText.style.fontWeight = "bold";
+				}
+				
+				divActorText.addEventListener('click',function(ev){
+					if(ev.target){
+						dialogController.playerDialogSelectedLast = ev.currentTarget.playerDialog;
+						console.log("Blue: "+ dialogController.playerDialogSelectedLast); 
+
+						ev.currentTarget.style.color = "blue";
+						ev.currentTarget.style.fontWeight = "bold";
+						
+						// if (playerDialog.actorDialogReply != null) dialogController.showDialogActorThread(playerDialog.actorDialogReply, expand);
+						
+						dialogController.showDialogThread(0, dialogController.playerDialogSelectedLast.idDialogTree);
+					 }
+				});
+				
+				var divListElem = document.getElementById("LIST-"+ playerDialog.idDialog);
+				divListElem.style.color = "gray";
+			}
+							
+			showDialogPlayerChildThread(playerDialog) {
+				// let playerDialogElem = this.listPlayerDialogsById.get(playerDialog.idDialog);
+				// console.log("PlayerDialogChils: "+ playerDialogElem.actorDialogReply);
+				let actorDialogReply = playerDialog.actorDialogReply;
+				console.log("showDialogPlayerChildThread: playerDialog = "+ playerDialog.idDialogTree +" , actorDialogReply = "+ actorDialogReply);
+				// if (playerDialogElem.actorDialogReply != null) this.showDialogActorThread(playerDialogElem.actorDialogReply, false, false);
+				if (actorDialogReply != null) this.showDialogActorThread(actorDialogReply, false, false);
+			}
+							
+			showDialogThread(idDialogRoot, toIdDialogTree) {
+				if (idDialogRoot == 0) idDialogRoot = this.actorDialogRoot.idDialog;
+				console.log("Thread.idDialogRoot = "+ idDialogRoot + " , toIdDialogTree = "+ toIdDialogTree);
+				
+				let actorDialogRoot = this.mapDialogThreads.get(idDialogRoot);
+				console.log("Thread.actorDialogRoot = "+ actorDialogRoot.idDialog);
+
+				var clonedListIdDialogsUI = [...this.listIdDialogsUI];
+				this.listIdDialogsUI = [];
+				// var clonedMapDialogsTree = new Map(this.mapDialogsTree);
+				// var clonedMapDialogsUI = new Map(this.mapDialogsUI);
+				var playerDialogSelectedLast = this.playerDialogSelectedLast;
+				
+				// this.newDialogThread();
+				divCenter.innerHTML = "";
+
+				this.actorDialogRoot = actorDialogRoot;
+				this.playerDialogSelectedLast = playerDialogSelectedLast;
+
+				console.log("Thread.clonedListIdDialogsUI = "+ clonedListIdDialogsUI.length);
+				// console.log("Thread.clonedMapDialogsUI = "+ clonedMapDialogsUI.size);
+								
+				let foundPlayerDialog = false;
+				let foundActorDialog = false;
+
+				var dialog = null;
+				for (let i = 0; i < clonedListIdDialogsUI.length; i++) {
+					let isSelected = false;
+					console.log(" - Thread.idDialogUI = " + clonedListIdDialogsUI[i] + " , map size = "+ this.mapDialogsTree.size);
+					dialog = this.mapDialogsTree.get(clonedListIdDialogsUI[i]);
+					// dialog = clonedMapDialogsUI.get(clonedListIdDialogsUI[i]);
+					console.log(" - Thread.dialog = "+ dialog + " , byIdDialoTree = "+ clonedListIdDialogsUI[i]);
+					console.log(" - Thread.dialogId = "+ dialog.idDialog);
+					
+					if (dialog instanceof ActorDialog) {
+						if (foundPlayerDialog) break;
+						// if (foundActorDialog) return;
+						if (dialog.idDialogTree == toIdDialogTree) {
+							foundActorDialog = true;
+							isSelected = true;
+							console.log("DgActor SELEEEEEEEEEEEEEEEEEEEEEEEEEEEEECTED");
+						}
+						this.showDialogActorThread(dialog, isSelected, false);
+						if (foundActorDialog) break;
+					} else {
+						if (dialog instanceof PlayerDialog) {
+							if (dialog.idDialogTree == toIdDialogTree) {
+								foundPlayerDialog = true;
+								isSelected = true;
+								console.log("PlActor SELEEEEEEEEEEEEEEEEEEEEEEEEEEEEECTED");
+							}
+							this.showDialogPlayerThread(dialog, isSelected, false);
+						}
+					}
+				}
+				
+				if (foundActorDialog) this.showDialogActorChildsThread(dialog);
+				else if (foundPlayerDialog) this.showDialogPlayerChildThread(dialog);
+			}
+
+			// ********************************************************************************************************************* //
+			// Lateral panels
+			
+			filterPanelDialog(elemPanel, listDialog, textFilter) {
+				let i = 0;
+				for (const [idDialog, actorDialog] of listDialog.entries()) {
+					var divElem = document.getElementById("LIST-"+ idDialog);
+					if (actorDialog.textDialog.includes(textFilter)) divElem.style.display = "block";
+					else divElem.style.display = "none";
+					i++;
+				}
+			}
+			
+			
+			// ********************************************************************************************************************* //
+			// JSON Build
+			
+			buildDialogJSON() {
+				let strJson = "";
+				let strActorDialogs = this.buildActorDialogsJson();
+				let strPlayerDialogs = this.buildPlayerDialogsJson();
+				return "{ " + strActorDialogs +",\n"+ strPlayerDialogs +",\n"+ this.buildDialogThreadsJson() +" }";
+			}
+			
+			buildActorDialogsJson() {
+				let strActorDialogs = "";
+				let i = 0;
+				for (const [key, value] of this.listActorDialogsById.entries()) {
+					if (i > 0) strActorDialogs += ",\n";
+					strActorDialogs += "{ \"id\": \""+ key +"\", \"text\": \""+ value.textDialog +"\"}";
+					i++;
+				}
+				if (strActorDialogs.length > 0) strActorDialogs = "\"actorDialogs\": ["+ strActorDialogs +"]";
+				return strActorDialogs;
+			}
+
+			buildPlayerDialogsJson() {
+				let strPlayerDialogs = "";
+				let i = 0;
+				for (const [key, value] of this.listPlayerDialogsById.entries()) {
+					if (i > 0) strPlayerDialogs += ",\n";
+					strPlayerDialogs += "{ \"id\": \""+ key +"\", \"text\": \""+ value.textDialog +"\"}";
+					i++;
+				}
+				if (strPlayerDialogs.length > 0) strPlayerDialogs = "\"playerDialogs\": ["+ strPlayerDialogs +"]";
+				return strPlayerDialogs;
+			}
+			
+			buildDialogThreadsJson() {		
+				let jsonDialogs = "";			
+				let i = 0;
+				for (const [key, actorDialog] of this.mapDialogThreads.entries()) {
+					if (i > 0) jsonDialogs += ",\n";
+					jsonDialogs += actorDialog.toJsonThis(null);
+					i++;
+				}
+
+				return "\"dialog\": [ " + jsonDialogs + " ]";
+			}
+
+			
+			// ********************************************************************************************************************* //
+			// Utils
+			
+			concatJsonBlocks(...strJson) {
+				let json = "";
+				for (let i = 0; i < strJson.size; i++) {
+					if (strJson[i].length > 0) {
+						if (i > 0) json += ",\n";
+						json += strJson[i];
+					}
+				}
+			}
+			
+			isElemIdActor(idElem) {
+				if (idElem.startsWith(DLG_ACTOR)) return true;
+				return false;
+			}
+			
+			isElemIdPlayer(idElem) {
+				if (idElem.startsWith(DLG_ACTOR)) return true;
+				return false;
+			}
+
+			getElemId(idElem) {
+				if (idElem.startsWith(DLG_ACTOR)) return idElem.substring(DLG_ACTOR.length);
+				if (idElem.startsWith(DLG_PLAYER)) return idElem.substring(DLG_PLAYER.length);
+				return idElem;
+			}
+		}
+	
+		class ActorDialog {
+			idDialog = 0;
+			idDialogTree = 0;
+			// idDialogUI = 0;
+			textDialog = "";
+			listPlayerReply = [];
+			
+			constructor(idDialog, textDialog){
+				console.log("Actor.idDialog: "+ idDialog); 
+
+				this.idDialog = idDialog;
+				this.textDialog = textDialog;
+			}
+			
+			cloneVoid() {
+				var newActorDialog = new ActorDialog();
+				newActorDialog.idDialogTree = uuid();
+				// newActorDialog.idDialogUI = uuid();
+				newActorDialog.idDialog = this.idDialog;
+				newActorDialog.textDialog = this.textDialog;
+				return newActorDialog;
+			}
+			
+			getNumReplies() {
+				return this.listPlayerReply.length;
+			}
+			
+			addPlayerReply(playerReply) {
+				if (!this.listPlayerReply.includes(playerReply)) {
+					playerReply.actorDialogParent = this;
+					playerReply.idActorDialogParent = this.idDialog;
+					this.listPlayerReply.push(playerReply);
+				}
+			}
+
+			toJsonThis(refReplyPrev) {
+				let strRet = "";
+				let strConditions = "";
+				let replyOptions = "";
+				for (i = 0; i < this.listPlayerReply.length; i++) {
+					let jsonReply = this.listPlayerReply[i].toJson();
+					if (i > 0) replyOptions += ",";
+					replyOptions += jsonReply;
+				}
+				
+				if (refReplyPrev != null) strConditions = "\"conditionsAnd\": [{\"refReplyPrev\": \""+ refReplyPrev +"\"}],";
+				else strConditions = "\"conditionsAnd\": [{\"NEXT\": \"\"}],";
+				
+				strRet = "{"+ strConditions +"\"ref\": \""+ this.idDialog +"\", \"text\": \""+ this.textDialog +"\", "+
+					"\"replyOptions\": [" + replyOptions + "]"
+					+"}";
+
+				let json = "";
+				console.log(" * Dialog: "+ this.textDialog);
+				for (i = 0; i < this.listPlayerReply.length; i++) {
+					let playerDialogReply = this.listPlayerReply[i];
+					let actorDialogReply = playerDialogReply.actorDialogReply;
+					if (actorDialogReply == null) console.log(" -> "+ playerDialogReply.textDialog);
+					if (actorDialogReply != null) console.log(" -> "+ playerDialogReply.textDialog + " -R-> "+ actorDialogReply.textDialog);
+					if (actorDialogReply != null && actorDialogReply != this) json = json + "," + actorDialogReply.toJsonThis(playerDialogReply.idDialog);
+				}
+				if (json.length > 0) strRet += json;
+				return strRet;
+			}
+		}
+	
+		class PlayerDialog {
+			actorDialogParent = null;
+			actorDialogReply = null;
+			idActorDialogParent = 0;
+			idDialog = 0;
+			idDialogTree = 0;
+			// idDialogUI = 0;
+			textDialog = "";
+			
+			constructor(idDialog, textDialog){
+				console.log("Player.idDialog: "+ idDialog); 
+				this.idDialog = idDialog;
+				this.textDialog = textDialog;
+			}
+
+			cloneVoid() {
+				var newPlayerDialog = new PlayerDialog();
+				newPlayerDialog.idDialogTree = uuid();
+				// newPlayerDialog.idDialogUI = uuid();
+				newPlayerDialog.idDialog = this.idDialog;
+				newPlayerDialog.textDialog = this.textDialog;
+				return newPlayerDialog;
+			}
+
+			addActorReply(actorReply) {
+				this.actorDialogReply = actorReply;
+			}
+			
+			toJson() {
+				return "{ \"ref\": \""+ this.idDialog +"\", \"text\": \""+ this.textDialog +"\" }";
+			}
+		}
+		
+		function uuid() {
+			return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+				(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+			);			
+		}
+
+		function buildDialogJSON() {
+			var jsonStr = dialogController.buildDialogJSON();
+			console.log("JSON:\n "+ jsonStr);
+			
+			var modal = document.getElementById("modalJson");
+			var modalContent = document.getElementById("modalJsonContent");
+			var modalArea = document.getElementById("modalJsonArea");
+			// modalContent.innerHTML = "<pre>"+JSON.stringify(jsonStr,undefined, 2) +"</pre>"
+			modalArea.innerHTML = JSON.stringify(JSON.parse(jsonStr),undefined, 4);
+			modal.style.display = "block";
+		}			
+		
+		function filterTextActor(event) {
+			console.log("Event: "+ event); 
+			console.log("Event.target: "+ event.target); 
+			var inputText = event.target.value;
+			var ulElem = document.getElementById("ulListActor");
+			dialogController.filterPanelDialog(ulElem, dialogController.listActorDialogsById, inputText)
+		}
+		function filterTextPlayer() {
+			console.log("Event: "+ event); 
+			console.log("Event.target: "+ event.target); 
+			var inputText = event.target.value;
+			var ulElem = document.getElementById("ulListPlayer");
+			dialogController.filterPanelDialog(ulElem, dialogController.listPlayerDialogsById, inputText)
+		}		
+		function addTextActor() {
+			var inputText = document.getElementById("text-actor").value;
+			var ulElem = document.getElementById("ulListActor");			
+			dialogController.createActorPanelDialog(inputText, true);
+		}
+		function addTextPlayer() {
+			var inputText = document.getElementById("text-player").value;
+			var ulElem = document.getElementById("ulListPlayer");
+			dialogController.createPlayerPanelDialog(inputText, true);
+		}
+		function start() {
+			dialogController = new DialogController();
+			dialogController.resetTextDialogs();
+			
+			for (i = 0; i < listActorText.length; i++) {
+				dialogController.createActorPanelDialog(listActorText[i], true);
+			}
+			for (i = 0; i < listPlayerText.length; i++) {
+				dialogController.createPlayerPanelDialog(listPlayerText[i], true);
+			}
+		}
+		function newDialogThread() {
+			dialogController.newDialogThread();
+		}
+		function buildPanelDialogThread(option) {
+			var idDialogRoot = option.value;  
+			dialogController.buildPanelDialogRoot(idDialogRoot, -1);
+		}
+
+		function copyTo() {
+			var modalArea = document.getElementById("modalJsonArea");
+			var jsonClipboard = modalArea.value;
+			console.log("Copy To Clipboard:\n"+ jsonClipboard); 
+			copyToClipboard(jsonClipboard);
+		}
+		function copyToClipboard(text) {
+			var el = document.createElement('textarea');
+			el.value = text;
+			el.setAttribute('readonly', '');
+			el.style = {
+				position: 'absolute',
+				left: '-9999px'
+			};
+			document.body.appendChild(el);
+			el.select();
+			document.execCommand('copy');
+			document.body.removeChild(el);
+		}
+	</script>
+	<style type="text/css">
+		#content {
+			display: flex;
+			flex-direction: row;
+			flex-wrap: wrap;
+		}
+		#content-left {
+			width: 35%;
+		}
+		#content-center {
+			width: 35%;
+		}
+		#content-right {
+			width: 30%;
+		}
+	</style>
+</head>
+<body onload="start()">
+
+<div>
+	<strong>Hilo</strong>
+	<select id="thread-selector" name="select" onchange="buildPanelDialogThread(this)">
+		<option value="1">Hilo 1</option>
+		<option value="2" selected>Hilo 2</option>
+		<option value="3">Huilo 3</option>
+	</select>
+	<a href="javascript:void(0)" onclick="newDialogThread();">+</a>
+	<p>
+</div>
+
+<div id="content">
+	<div id="content-left" align="left">
+		<strong>Sentencias del actor</strong>
+		<ul id="ulListActor">
+			<li>Yo digo tal</li>
+			<li>I ara pasacual</li>
+		</ul>
+		<input type="text" id="text-actor" name="text-actor" maxlength="100" size="50" onInput="filterTextActor(event)">
+		<a href="javascript:void(0)" onclick="addTextActor();">+</a>
+	</div>
+
+	<div id="content-center" align="left">
+		<strong>Diálogo combinado</strong><br><br>
+		<div id="content-dialog" align="left">
+		</div>
+		<p>
+			<input type="button" value="JSON" onclick="buildDialogJSON();"> 
+		</p>
+	</div>
+
+	<div id="content-right"  align="left">
+		<strong>Sentencias del jugador</strong>
+		<ul id="ulListPlayer">
+			<li>Esta es mi respuesta</li>
+			<li>O bien es esta otra</li>
+		</ul>
+		<input type="text" id="text-player" name="text-player" maxlength="100" size="50" onInput="filterTextPlayer(event)">
+		<a href="javascript:void(0)" onclick="addTextPlayer();">+</a>
+	</div>
+</div>
+
+<div id="modalJson" class="modal">
+	<!-- Modal content -->
+	<div class="modal-content">
+		<span class="close" onclick="event.target.parentElement.parentElement.style.display = 'none'">&times;</span>
+		<span class="copy" onclick="copyTo();">&#9744;</span>
+		<p id="modalJsonContent">Dialog JSON:</p>
+		<textarea id="modalJsonArea" name="textarea" rows="30" cols="120">Write something here</textarea>
+	</div>
+</div>
+
+
+
+</body>
+</html>

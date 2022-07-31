@@ -1,0 +1,223 @@
+{
+    "dialogSW": "www.livedialogs.com",
+    "dialogVersion": "0.0.1",
+    "refPrj": "",
+    "versionPrj": "0.0.1",
+    "page": "",
+    "refActorNpg": "Elvira",
+    "refActorPlayer": "Ramoncín",
+    "npgSentences": [
+        {
+            "id": "1151f443-695e-4d2e-9f36-11af15fe52d2",
+            "text": "¿Y tú que quieres, novato?"
+        },
+        {
+            "id": "4f09525f-37ba-4ffe-b25f-eddfcba86bab",
+            "text": "Pues felicidades. Yo soy ${ACTOR}, el cazador. Piérdete y déjame en paz"
+        },
+        {
+            "id": "20fc8fe8-0ef1-4b1f-9b77-f9079217549f",
+            "text": "¿Y a tí que te importa?"
+        },
+        {
+            "id": "71b595c7-ccd7-4526-8adb-ccbab1dbb529",
+            "text": "¿Escapar? Solo se puede salir de aquí muerto. En eso sí podría ayudarte"
+        },
+        {
+            "id": "a1808148-ec49-46d6-91f3-03ab5339b5e7",
+            "text": "¡Pero que gracioso eres, novato! Yo soy ${ACTOR}, el cazador. ¡Me caes bien!"
+        },
+        {
+            "id": "49ed7322-17d7-46b2-8130-e5ed632d55ee",
+            "text": "¡Tu de nuevo, ${PLAYER}!. Dime, ¿como te va?"
+        },
+        {
+            "id": "191dc5a8-d765-4cdc-b29c-d408b219abda",
+            "text": "Pues no se, en alguna posada supongo ¿Oye, te vienes mañana a cazar?"
+        }
+    ],
+    "playerSentences": [
+        {
+            "id": "75ed9369-5da4-487d-a8ba-55085c43836d",
+            "text": "Me llamo ${PLAYER}, encantado de saludarte"
+        },
+        {
+            "id": "f9e5a6c8-d4f8-43af-8232-4f75a284221d",
+            "text": "¿Como te llamas?"
+        },
+        {
+            "id": "d4b39d81-f76d-417f-b7f5-0f05d7188750",
+            "text": "Quiero tu ayuda para escapar de aquí"
+        },
+        {
+            "id": "f0aec673-3dbd-4628-99a0-3bdbba9541e7",
+            "text": "No me llames novato. Me llamo ${PLAYER}, y yo no te he faltado al respeto"
+        },
+        {
+            "id": "5d9ff985-9d15-4446-9671-bb10e037c467",
+            "text": "Algo mal, no se donde alojarme"
+        },
+        {
+            "id": "eda79c09-f2a3-4e34-821b-e38d55df4dc0",
+            "text": "Bien! Oye, me gustaría ir mañana contigo a cazar"
+        },
+        {
+            "id": "43f7b770-1018-484f-9f5d-cef1739fd040",
+            "text": "Oye, esta ${ACTOR:ELVIRA} es rarita, ¿no?"
+        },
+        {
+            "id": "f25ad72b-2c0f-443b-8d51-05f6a79b6898",
+            "text": "Oye, esa chica, ${ACTOR:HELLEN}, ¿vive con alguien?"
+        },
+        {
+            "id": "50251c9d-b828-4d27-a5b8-596e9a918ac1",
+            "text": "Oye, ¿${ACTOR:PANDORA} qué es?"
+        },
+        {
+            "id": "7b408a6f-76f1-4e7b-b185-c013be3d406b",
+            "text": "¿Me dejarías quedarme en tu casa?"
+        },
+        {
+            "id": "46db2b66-bed8-482f-9eda-3f309561d67c",
+            "text": "¿En la posada de ${ACTOR:ELVIRA}?"
+        },
+        {
+            "id": "04fdaccb-f0fa-4364-9a5b-cf2a4de8d84c",
+            "text": "¡A cazar! Buena idea ¿Cuando y donde quedamos?"
+        },
+        {
+            "id": "88d0793c-2cde-42db-9128-78d55ecfcc0d",
+            "text": "No me gusta la caza ni el sufrimiento animal"
+        }
+    ],
+    "npgDialog": [
+        {
+            "conditionsAnd": [
+                {
+                    "NEXT": ""
+                }
+            ],
+            "idDialogNode": "37f9967f-ddb9-4c45-8bf5-104c50f61c9f",
+            "idDialogSentence": "1151f443-695e-4d2e-9f36-11af15fe52d2",
+            "textSentence": "¿Y tú que quieres, novato?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "1c9ae3ac-ebf2-4f54-bef5-c570560e316d",
+                    "idDialogSentence": "75ed9369-5da4-487d-a8ba-55085c43836d",
+                    "textSentence": "Me llamo ${PLAYER}, encantado de saludarte"
+                },
+                {
+                    "idDialogNode": "3eb1b71d-0dbf-46f2-bb42-8debd234955e",
+                    "idDialogSentence": "f9e5a6c8-d4f8-43af-8232-4f75a284221d",
+                    "textSentence": "¿Como te llamas?"
+                },
+                {
+                    "idDialogNode": "139f2a69-7b3a-4b8d-a931-37b02f65e1bb",
+                    "idDialogSentence": "d4b39d81-f76d-417f-b7f5-0f05d7188750",
+                    "textSentence": "Quiero tu ayuda para escapar de aquí"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "3eb1b71d-0dbf-46f2-bb42-8debd234955e"
+                }
+            ],
+            "idDialogNode": "7816a2ee-9324-4902-9b01-5f4826a29b16",
+            "idDialogSentence": "20fc8fe8-0ef1-4b1f-9b77-f9079217549f",
+            "textSentence": "¿Y a tí que te importa?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "2fa10a07-33db-42b5-8547-d6da8851b643",
+                    "idDialogSentence": "5d9ff985-9d15-4446-9671-bb10e037c467",
+                    "textSentence": "Algo mal, no se donde alojarme"
+                },
+                {
+                    "idDialogNode": "5dabf2eb-8f57-4857-83eb-784176749e4d",
+                    "idDialogSentence": "eda79c09-f2a3-4e34-821b-e38d55df4dc0",
+                    "textSentence": "Bien! Oye, me gustaría ir mañana contigo a cazar"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "3eb1b71d-0dbf-46f2-bb42-8debd234955e"
+                }
+            ],
+            "idDialogNode": "81f5aaab-470a-4982-adf5-ee0c7be75e3b",
+            "idDialogSentence": "71b595c7-ccd7-4526-8adb-ccbab1dbb529",
+            "textSentence": "¿Escapar? Solo se puede salir de aquí muerto. En eso sí podría ayudarte",
+            "replyOptions": []
+        }
+    ],
+    "playerDialog": [
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "37f9967f-ddb9-4c45-8bf5-104c50f61c9f"
+                }
+            ],
+            "idDialogNode": "1c9ae3ac-ebf2-4f54-bef5-c570560e316d",
+            "idDialogSentence": "75ed9369-5da4-487d-a8ba-55085c43836d",
+            "textSentence": "Me llamo ${PLAYER}, encantado de saludarte",
+            "replyOptions": []
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "37f9967f-ddb9-4c45-8bf5-104c50f61c9f"
+                }
+            ],
+            "idDialogNode": "3eb1b71d-0dbf-46f2-bb42-8debd234955e",
+            "idDialogSentence": "f9e5a6c8-d4f8-43af-8232-4f75a284221d",
+            "textSentence": "¿Como te llamas?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "7816a2ee-9324-4902-9b01-5f4826a29b16",
+                    "idDialogSentence": "20fc8fe8-0ef1-4b1f-9b77-f9079217549f",
+                    "textSentence": "¿Y a tí que te importa?"
+                },
+                {
+                    "idDialogNode": "81f5aaab-470a-4982-adf5-ee0c7be75e3b",
+                    "idDialogSentence": "71b595c7-ccd7-4526-8adb-ccbab1dbb529",
+                    "textSentence": "¿Escapar? Solo se puede salir de aquí muerto. En eso sí podría ayudarte"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "37f9967f-ddb9-4c45-8bf5-104c50f61c9f"
+                }
+            ],
+            "idDialogNode": "139f2a69-7b3a-4b8d-a931-37b02f65e1bb",
+            "idDialogSentence": "d4b39d81-f76d-417f-b7f5-0f05d7188750",
+            "textSentence": "Quiero tu ayuda para escapar de aquí",
+            "replyOptions": []
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "7816a2ee-9324-4902-9b01-5f4826a29b16"
+                }
+            ],
+            "idDialogNode": "2fa10a07-33db-42b5-8547-d6da8851b643",
+            "idDialogSentence": "5d9ff985-9d15-4446-9671-bb10e037c467",
+            "textSentence": "Algo mal, no se donde alojarme",
+            "replyOptions": []
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "7816a2ee-9324-4902-9b01-5f4826a29b16"
+                }
+            ],
+            "idDialogNode": "5dabf2eb-8f57-4857-83eb-784176749e4d",
+            "idDialogSentence": "eda79c09-f2a3-4e34-821b-e38d55df4dc0",
+            "textSentence": "Bien! Oye, me gustaría ir mañana contigo a cazar",
+            "replyOptions": []
+        }
+    ]
+}
