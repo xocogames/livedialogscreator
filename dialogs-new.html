@@ -612,41 +612,40 @@
             }
         }
 
-        /*
         class DialogTreeMini {
-        	mapDialogElems = new Map();
-        	
-        	instanceDialogElem(idDialogElem) {
-        		var dialogElem = this.mapDialogElems.get(idDialogElem);
-        		if (dialogElem == null) dialogElem = new DialogElem(idDialogElem); // jsonDialogObj.getField("textSentence")
-        		this.mapDialogElems.set(idDialogElem, dialogElem);
-        		return dialogElem;
-        	}
+            mapDialogElems = new Map();
+
+            instanceDialogElem(idDialogElem) {
+                var dialogElem = this.mapDialogElems.get(idDialogElem);
+                if (dialogElem == null) dialogElem = new DialogElem(idDialogElem); // jsonDialogObj.getField("textSentence")
+                this.mapDialogElems.set(idDialogElem, dialogElem);
+                return dialogElem;
+            }
         }
-		
+
         class DialogElem {
-        	idParent = null;
-        	idDialog = null;
-        	listChildsIds = [];
-        	idSentence = null;
-        	
-        	constructor(id) {
-        		this.idDialog = id;
-        	}
-        	
-        	setParentId(idParent) {
-        		this.idParent = idParent;
-        	}
-        	
-        	addChildId(idDialogChild) {
-        		this.listChildsIds.push(idDialogChild);
-        	}
-        	
-        	setSentenceId(idSentence) {
-        		this.idSentence = idSentence;
-        	}
+            idParent = null;
+            idDialog = null;
+            listChildsIds = [];
+            idSentence = null;
+
+            constructor(id) {
+                this.idDialog = id;
+            }
+
+            setParentId(idParent) {
+                this.idParent = idParent;
+            }
+
+            addChildId(idDialogChild) {
+                this.listChildsIds.push(idDialogChild);
+            }
+
+            setSentenceId(idSentence) {
+                this.idSentence = idSentence;
+            }
         }
-        */
+
         function readFile(file) {
             return new Promise((resolve, reject) => {
                 let fr = new FileReader();
