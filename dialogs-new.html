@@ -49,6 +49,7 @@
                 this.textSentence = textSentence;
             }
         }
+
         class DialogTreeNode {
             idDialogNode = null;
             idDialogParent = null;
@@ -85,6 +86,7 @@
                 return strRet;
             }
         }
+
         class DialogTree {
             listIdDialogTreeRoots = [];
             mapDialogTreeNodes = new Map();
@@ -94,8 +96,35 @@
                 this.mapDialogTreeNodes = new Map();
             }
 
-            addSentenceReply(id, idDialogParent, dialogSentence) {
-                var dialogTreeNode = new DialogTreeNode(id, dialogSentence);
+            createDialogNode(idDialogNode, dialogSentence) {
+                var dialogTreeNode = this.mapDialogTreeNodes.get();
+                if (dialogTreeNode == null) {
+                    dialogTreeNode = new DialogTreeNode(idDialogNode, dialogSentence);
+                    this.mapDialogTreeNodes.set(dialogTreeNode.idDialogNode, dialogTreeNode);
+                } else {
+                    if (dialogSentence != null && dialogTreeNode.dialogSentence == null) dialogTreeNode.dialogSentence = dialogSentence;
+                }
+                return dialogTreeNode;
+            }
+
+            createReplyDialogNode(idDialogNode, idDialogParent, dialogSentence) {
+                var dialogTreeNode = this.mapDialogTreeNodes.get();
+                if (dialogTreeNode == null) {
+                    return this.addSentenceReply(idDialogNode, idDialogParent, dialogSentence);
+                } else {
+                    if (dialogSentence != null && dialogTreeNode.dialogSentence == null) dialogTreeNode.dialogSentence = dialogSentence;
+
+                    var dialogTreeParent = this.mapDialogTreeNodes.get(idDialogParent);
+                    if (dialogTreeParent != null) {
+                        dialogTreeNode.idDialogParent = dialogTreeParent.idDialogNode;
+                        dialogTreeParent.listDialogTreeReplies.push(dialogTreeNode);
+                    }
+                    return dialogTreeNode;
+                }
+            }
+
+            addSentenceReply(idDialogNode, idDialogParent, dialogSentence) {
+                var dialogTreeNode = new DialogTreeNode(idDialogNode, dialogSentence);
                 var dialogTreeParent = this.mapDialogTreeNodes.get(idDialogParent);
                 if (dialogTreeParent != null) {
                     dialogTreeNode.idDialogParent = dialogTreeParent.idDialogNode;
@@ -105,17 +134,21 @@
                 } else {
                     if (idDialogParent == null) {
                         this.mapDialogTreeNodes.set(dialogTreeNode.idDialogNode, dialogTreeNode);
-                        this.listIdDialogTreeRoots.push(dialogTreeNode.idDialogNode);
+                        this.addDialogAsRoot(dialogTreeNode);
                         return dialogTreeNode;
                     }
                 }
                 return null;
             }
 
+            addDialogAsRoot(dialogNode) {
+                this.listIdDialogTreeRoots.push(dialogNode.idDialogNode);
+            }
+
             getTreeNode(idDialogNode) {
                 if (idDialogNode == null) {
-                    if (this.listIdDialogTreeRoots.length > 0) return this.listIdDialogTreeRoots[0];
-                    return null;
+                    if (this.listIdDialogTreeRoots.length > 0) idDialogNode = this.listIdDialogTreeRoots[0];
+                    else return null;
                 }
                 var dialogTreeNode = this.mapDialogTreeNodes.get(idDialogNode);
                 return dialogTreeNode;
@@ -169,6 +202,10 @@
                 var dialogSentence = new DialogSentence(this.refActor, id, text);
                 this.mapSentences.set(dialogSentence.idSentence, dialogSentence);
                 return dialogSentence;
+            }
+
+            getSentence(idSentence) {
+                return this.mapSentences.get(idSentence);
             }
 
             filterPanelSentences(textFilter) {
@@ -244,6 +281,10 @@
                 this.buildLateralPanel(ulElemActor, dialogSentence, false);
             }
 
+            getSentenceNpg(idSentence) {
+                return this.uiPanelSentencesNpg.getSentence(idSentence);
+            }
+
             createPlayerPanelSentence(text) {
                 var dialogSentence = this.uiPanelSentencesPlayer.createDialogSentence(text);
                 this.buildLateralPanel(ulElemPlayer, dialogSentence, true);
@@ -252,6 +293,10 @@
             createPlayerPanelSentenceWithId(id, text) {
                 var dialogSentence = this.uiPanelSentencesPlayer.createDialogSentenceWithId(id, text);
                 this.buildLateralPanel(ulElemPlayer, dialogSentence, true);
+            }
+
+            getSentencePlayer(idSentence) {
+                return this.uiPanelSentencesPlayer.getSentence(idSentence);
             }
 
             addDialogReply(idDialogReply, dialogSentence) {
@@ -541,10 +586,10 @@
         }
 
         class DialogJsonBuilder {
-            uiDialogControll = null;
+            uiDialogController = null;
             jsonObjContent = null;
 
-            dialogTree = new DialogTreeMini();
+            dialogTree = new DialogTree();
 
             constructor(uiDialogController) {
                 this.uiDialogController = uiDialogController;
@@ -557,6 +602,8 @@
                 this.buildDialogSentences();
                 this.buildDialogActor("npgDialog");
                 this.buildDialogActor("playerDialog");
+
+                this.showRootElem();
             }
 
             buildDialogSentences() {
@@ -594,57 +641,64 @@
                     var jsonDialogObj = new JsonObjectParser().buildByObject(jsonDialogParser.getArrayObjects()[i]);
 
                     var idDialogElem = jsonDialogObj.getField("idDialogNode");
-                    var dialogElem = this.dialogTree.instanceDialogElem(idDialogElem);
-                    dialogElem.setSentenceId(jsonDialogObj.getField("idDialogSentence"));
-                    console.log("- Dialog: [" + i + "] = " + dialogElem.idDialog);
+                    var idSentence = jsonDialogObj.getField("idDialogSentence");
+
+                    console.log("- Dialog: [" + i + "] = " + idDialogElem);
+
+                    var dialogSentence = this.getSentence(refActor, idSentence);
+                    var dialogNode = this.dialogTree.createDialogNode(idDialogElem, dialogSentence);
+
+                    console.log("  : Sentence: [" + dialogSentence.idSentence + "] = " + dialogSentence.textSentence);
+
+                    var isDialogRoot = false;
+                    var jsonDialogConditions = new JsonObjectParser().buildByObject(jsonDialogObj.getField("conditionsAnd"));
+                    if (jsonDialogConditions != null) {
+                        var jsonConditionFirst = new JsonObjectParser().buildByObject(jsonDialogConditions.getArrayObjects()[0]);
+                        isDialogRoot = jsonConditionFirst.containsField("NEXT");
+                    }
 
                     var jsonDialogReplies = new JsonObjectParser().buildByObject(jsonDialogObj.getField("replyOptions"));
                     for (var r = 0; r < jsonDialogReplies.getArrayObjects().length; r++) {
                         var jsonReplyObj = new JsonObjectParser().buildByObject(jsonDialogReplies.getArrayObjects()[r]);
                         var idDialogChild = jsonReplyObj.getField("idDialogNode");
-                        var dialogChild = this.dialogTree.instanceDialogElem(idDialogChild);
-                        dialogElem.addChildId(idDialogChild);
-                        dialogChild.setParentId(idDialogElem);
-                        console.log("  -> Child: [" + r + "] = " + dialogChild.idDialog);
+                        var idSentenceChild = jsonReplyObj.getField("idDialogSentence");
+                        var dialogSentenceChild = this.getSentence(refActor == "npgDialog" ? "playerDialog" : "npgDialog", idSentence);
+
+                        var dialogNodeChild = this.dialogTree.createReplyDialogNode(idDialogChild, idDialogElem, dialogSentenceChild);
+
+                        console.log("  -> Child: [" + r + "] = " + dialogNodeChild.idDialogNode);
                     }
-                    // uiDialogController.createPlayerPanelSentenceWithId(jsonDialogObj.getField("id"), );			
+
+                    if (isDialogRoot) {
+                        this.dialogTree.addDialogAsRoot(dialogNode);
+                        console.log("  -> IS ROOOOT: " + dialogNode + "(" + dialogNode.idDialogNode + ")");
+                    }
                 }
             }
-        }
 
-        class DialogTreeMini {
-            mapDialogElems = new Map();
+            showRootElem() {
+                var dialogNodeRoot = this.dialogTree.getTreeNode(null);
 
-            instanceDialogElem(idDialogElem) {
-                var dialogElem = this.mapDialogElems.get(idDialogElem);
-                if (dialogElem == null) dialogElem = new DialogElem(idDialogElem); // jsonDialogObj.getField("textSentence")
-                this.mapDialogElems.set(idDialogElem, dialogElem);
-                return dialogElem;
+                console.log("- Dialog ROOR: " + dialogNodeRoot);
+                console.log("- ID Dialog ROOR: " + dialogNodeRoot.idDialogNode);
+                console.log("- Sentence ROOT: [" + dialogNodeRoot.dialogSentence);
+                console.log("- ID Sentence ROOT: [" + dialogNodeRoot.idSentence + "] = " + dialogNodeRoot.textSentence);
+
+                this.uiDialogController.showDialogTreeNode(dialogNodeRoot, false, false);
+            }
+
+            getSentence(refActor, idSentence) {
+                return refActor == "npgDialog" ? uiDialogController.getSentenceNpg(idSentence) : uiDialogController.getSentencePlayer(idSentence);
             }
         }
 
-        class DialogElem {
-            idParent = null;
-            idDialog = null;
-            listChildsIds = [];
-            idSentence = null;
 
-            constructor(id) {
-                this.idDialog = id;
-            }
 
-            setParentId(idParent) {
-                this.idParent = idParent;
-            }
 
-            addChildId(idDialogChild) {
-                this.listChildsIds.push(idDialogChild);
-            }
 
-            setSentenceId(idSentence) {
-                this.idSentence = idSentence;
-            }
-        }
+        // *************************************************************************************************************** //
+        // Carga de ficheros y Parser genérico de JSONs
+        // *************************************************************************************************************** //
 
         function readFile(file) {
             return new Promise((resolve, reject) => {
@@ -655,59 +709,11 @@
         }
 
         async function read(input) {
-            // msg.innerText = await readFile(input.files[0]);
-
             var jsonContentLoaded = await readFile(input.files[0]);
 
             var dialogBuilder = new DialogJsonBuilder(uiDialogController);
             dialogBuilder.buildDialogs(jsonContentLoaded);
-
-            /*
-            var jsonObjParser = new JsonObjectParser();
-            jsonObjParser.buildByJson(jsonContentLoaded);
-			
-            console.log("- TO Iterate.");
-            console.log(" * refActorNpg = "+ jsonObjParser.getField("refActorNpg"));
-            for (const [key, value] of jsonObjParser.iteratorEntries()) {
-            	console.log("- Iterate: "+ key + " : "+ jsonObjParser.getField(key));
-            }
-			
-            var jsonSentencesParser = new JsonObjectParser();
-            jsonSentencesParser.buildByObject(jsonObjParser.getField("npgSentences"));
-
-            for (var i = 0; i < jsonSentencesParser.getArrayObjects().length; i++) {
-            	console.log("- Sentence: ["+ i + "] = "+ jsonSentencesParser.getArrayObjects()[i]);
-            	var jsonSentenceObj = new JsonObjectParser().buildByObject(jsonSentencesParser.getArrayObjects()[i]);
-            	uiDialogController.createNpgPanelSentenceWithId(jsonSentenceObj.getField("id"), jsonSentenceObj.getField("text"));			
-            }
-
-            // var obj = JSON.parse(jsonContentLoaded);
-            // printValues(obj);
-            */
         }
-
-        // Define recursive function to print nested values
-        /*
-        function printValues(obj) {
-        	var keys = Object.keys(obj);
-        	for (var i in keys) {
-        		console.log(" > key("+ i +"): "+ keys[i]);
-        	}
-        	for(var k in obj) {
-        		if(obj[k] instanceof Object) {
-        			var keys = Object.keys(obj[k]);
-        			for (var i in keys) {
-        				console.log(" > key("+ i +"): "+ keys[i].Name);
-        			}
-        			console.log(" > obj > "+ obj[k] + " / name = "+ obj[k].constructor.name + " / key = "+ keys[0]);
-        			printValues(obj[k]);
-        		} else {
-        			console.log(" > log > "+ obj[k] + " --- "+ obj + " --- "+ obj.Name);
-        			// document.write(obj[k] + "<br>");
-        		};
-        	}
-        };
-        */
 
         class JsonObjectParser {
             objJson = null;
@@ -733,6 +739,10 @@
                     }
                 }
                 return this;
+            }
+
+            containsField(name) {
+                return this.mapKeyValues.has(name);
             }
 
             getField(name) {
