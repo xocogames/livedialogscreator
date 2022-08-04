@@ -292,6 +292,7 @@
 
             createPlayerPanelSentenceWithId(id, text) {
                 var dialogSentence = this.uiPanelSentencesPlayer.createDialogSentenceWithId(id, text);
+                console.log("- SentenceCreated: [" + id + "] = " + text);
                 this.buildLateralPanel(ulElemPlayer, dialogSentence, true);
             }
 
@@ -311,6 +312,9 @@
             showDialogTreeNode(dialogTreeNode, alignRight, expand) {
                 var divDialogNode = document.createElement("div");
                 divDialogNode.id = dialogTreeNode.idDialogNode;
+                console.log("showDialogTreeNode: dialogTreeNode = " + dialogTreeNode + "(" + dialogTreeNode.idDialogNode + ")");
+                console.log("showDialogTreeNode: dialogTreeNode.dialogSentence = " + dialogTreeNode.dialogSentence);
+                console.log("showDialogTreeNode: dialogTreeNode.dialogSentence.textSentence = " + dialogTreeNode.dialogSentence.textSentence);
                 divDialogNode.appendChild(document.createTextNode(dialogTreeNode.dialogSentence.textSentence));
                 if (alignRight) divDialogNode.setAttribute("align", "right");
                 divCenter.appendChild(divDialogNode);
@@ -415,7 +419,7 @@
 
                 for (var i = 0; i < listDivDialogNodes.length; i++) {
                     var divElem = listDivDialogNodes[i];
-                    if (listLimitIdsDialogNodes.includes(divElem.id)) return;
+                    if (divElem.id == idDialogNode || listLimitIdsDialogNodes.includes(divElem.id)) return;
 
                     divCenter.removeChild(divElem);
                 }
@@ -587,12 +591,12 @@
 
         class DialogJsonBuilder {
             uiDialogController = null;
+            dialogTree = null;
             jsonObjContent = null;
-
-            dialogTree = new DialogTree();
 
             constructor(uiDialogController) {
                 this.uiDialogController = uiDialogController;
+                this.dialogTree = uiDialogController.dialogTree;
             }
 
             buildDialogs(jsonContent) {
@@ -627,7 +631,7 @@
                 jsonSentencesParser.buildByObject(this.jsonObjContent.getField("playerSentences"));
 
                 for (var i = 0; i < jsonSentencesParser.getArrayObjects().length; i++) {
-                    // console.log("- Sentence: ["+ i + "] = "+ jsonSentencesParser.getArrayObjects()[i]);
+                    console.log("- Sentence: [" + i + "] = " + jsonSentencesParser.getArrayObjects()[i]);
                     var jsonSentenceObj = new JsonObjectParser().buildByObject(jsonSentencesParser.getArrayObjects()[i]);
                     uiDialogController.createPlayerPanelSentenceWithId(jsonSentenceObj.getField("id"), jsonSentenceObj.getField("text"));
                 }
@@ -648,7 +652,10 @@
                     var dialogSentence = this.getSentence(refActor, idSentence);
                     var dialogNode = this.dialogTree.createDialogNode(idDialogElem, dialogSentence);
 
-                    console.log("  : Sentence: [" + dialogSentence.idSentence + "] = " + dialogSentence.textSentence);
+                    console.log("  : Sentence (" + refActor + "): [" + dialogSentence.idSentence + "] = " + dialogSentence.textSentence);
+                    console.log("  : DialogNode (" + refActor + "): [" + dialogNode.idDialogNode + "]");
+                    console.log("  : DialogNode.Sentence (" + refActor + "): " + dialogNode.dialogSentence);
+                    console.log("  : DialogNode.Sentence.id (" + refActor + "): [" + dialogNode.dialogSentence.idSentence + "]: " + dialogNode.dialogSentence.textSentence);
 
                     var isDialogRoot = false;
                     var jsonDialogConditions = new JsonObjectParser().buildByObject(jsonDialogObj.getField("conditionsAnd"));
@@ -662,7 +669,7 @@
                         var jsonReplyObj = new JsonObjectParser().buildByObject(jsonDialogReplies.getArrayObjects()[r]);
                         var idDialogChild = jsonReplyObj.getField("idDialogNode");
                         var idSentenceChild = jsonReplyObj.getField("idDialogSentence");
-                        var dialogSentenceChild = this.getSentence(refActor == "npgDialog" ? "playerDialog" : "npgDialog", idSentence);
+                        var dialogSentenceChild = this.getSentence(refActor == "npgDialog" ? "playerDialog" : "npgDialog", idSentenceChild);
 
                         var dialogNodeChild = this.dialogTree.createReplyDialogNode(idDialogChild, idDialogElem, dialogSentenceChild);
 
