@@ -97,7 +97,7 @@
             }
 
             createDialogNode(idDialogNode, dialogSentence) {
-                var dialogTreeNode = this.mapDialogTreeNodes.get();
+                var dialogTreeNode = this.mapDialogTreeNodes.get(idDialogNode);
                 if (dialogTreeNode == null) {
                     dialogTreeNode = new DialogTreeNode(idDialogNode, dialogSentence);
                     this.mapDialogTreeNodes.set(dialogTreeNode.idDialogNode, dialogTreeNode);
@@ -108,7 +108,7 @@
             }
 
             createReplyDialogNode(idDialogNode, idDialogParent, dialogSentence) {
-                var dialogTreeNode = this.mapDialogTreeNodes.get();
+                var dialogTreeNode = this.mapDialogTreeNodes.get(idDialogNode);
                 if (dialogTreeNode == null) {
                     return this.addSentenceReply(idDialogNode, idDialogParent, dialogSentence);
                 } else {
@@ -118,6 +118,7 @@
                     if (dialogTreeParent != null) {
                         dialogTreeNode.idDialogParent = dialogTreeParent.idDialogNode;
                         dialogTreeParent.listDialogTreeReplies.push(dialogTreeNode);
+                        this.removeDialogFromRoot(dialogTreeNode);
                     }
                     return dialogTreeNode;
                 }
@@ -143,6 +144,13 @@
 
             addDialogAsRoot(dialogNode) {
                 this.listIdDialogTreeRoots.push(dialogNode.idDialogNode);
+            }
+
+            removeDialogFromRoot(dialogNode) {
+                var index = this.listIdDialogTreeRoots.indexOf(dialogNode);
+                if (index !== -1) {
+                    this.listIdDialogTreeRoots.splice(index, 1);
+                }
             }
 
             getTreeNode(idDialogNode) {
@@ -292,7 +300,6 @@
 
             createPlayerPanelSentenceWithId(id, text) {
                 var dialogSentence = this.uiPanelSentencesPlayer.createDialogSentenceWithId(id, text);
-                console.log("- SentenceCreated: [" + id + "] = " + text);
                 this.buildLateralPanel(ulElemPlayer, dialogSentence, true);
             }
 
@@ -312,9 +319,6 @@
             showDialogTreeNode(dialogTreeNode, alignRight, expand) {
                 var divDialogNode = document.createElement("div");
                 divDialogNode.id = dialogTreeNode.idDialogNode;
-                console.log("showDialogTreeNode: dialogTreeNode = " + dialogTreeNode + "(" + dialogTreeNode.idDialogNode + ")");
-                console.log("showDialogTreeNode: dialogTreeNode.dialogSentence = " + dialogTreeNode.dialogSentence);
-                console.log("showDialogTreeNode: dialogTreeNode.dialogSentence.textSentence = " + dialogTreeNode.dialogSentence.textSentence);
                 divDialogNode.appendChild(document.createTextNode(dialogTreeNode.dialogSentence.textSentence));
                 if (alignRight) divDialogNode.setAttribute("align", "right");
                 divCenter.appendChild(divDialogNode);
@@ -580,7 +584,7 @@
 
         function buildDialogJSON() {
             var jsonStr = uiDialogController.buildDialogJSON();
-            console.log("JSON:\n " + jsonStr);
+            // console.log("JSON:\n " + jsonStr);
 
             var modal = document.getElementById("modalJson");
             var modalContent = document.getElementById("modalJsonContent");
@@ -631,13 +635,13 @@
                 jsonSentencesParser.buildByObject(this.jsonObjContent.getField("playerSentences"));
 
                 for (var i = 0; i < jsonSentencesParser.getArrayObjects().length; i++) {
-                    console.log("- Sentence: [" + i + "] = " + jsonSentencesParser.getArrayObjects()[i]);
+                    // console.log("- Sentence: [" + i + "] = " + jsonSentencesParser.getArrayObjects()[i]);
                     var jsonSentenceObj = new JsonObjectParser().buildByObject(jsonSentencesParser.getArrayObjects()[i]);
                     uiDialogController.createPlayerPanelSentenceWithId(jsonSentenceObj.getField("id"), jsonSentenceObj.getField("text"));
                 }
             }
 
-            buildDialogActor(refActor) {
+            buildDialogActor(refActor, withReplies) {
                 var jsonDialogParser = new JsonObjectParser();
                 jsonDialogParser.buildByObject(this.jsonObjContent.getField(refActor));
 
@@ -647,15 +651,10 @@
                     var idDialogElem = jsonDialogObj.getField("idDialogNode");
                     var idSentence = jsonDialogObj.getField("idDialogSentence");
 
-                    console.log("- Dialog: [" + i + "] = " + idDialogElem);
+                    // console.log("- Dialog: [" + i + "] = " + idDialogElem);
 
                     var dialogSentence = this.getSentence(refActor, idSentence);
                     var dialogNode = this.dialogTree.createDialogNode(idDialogElem, dialogSentence);
-
-                    console.log("  : Sentence (" + refActor + "): [" + dialogSentence.idSentence + "] = " + dialogSentence.textSentence);
-                    console.log("  : DialogNode (" + refActor + "): [" + dialogNode.idDialogNode + "]");
-                    console.log("  : DialogNode.Sentence (" + refActor + "): " + dialogNode.dialogSentence);
-                    console.log("  : DialogNode.Sentence.id (" + refActor + "): [" + dialogNode.dialogSentence.idSentence + "]: " + dialogNode.dialogSentence.textSentence);
 
                     var isDialogRoot = false;
                     var jsonDialogConditions = new JsonObjectParser().buildByObject(jsonDialogObj.getField("conditionsAnd"));
@@ -673,24 +672,17 @@
 
                         var dialogNodeChild = this.dialogTree.createReplyDialogNode(idDialogChild, idDialogElem, dialogSentenceChild);
 
-                        console.log("  -> Child: [" + r + "] = " + dialogNodeChild.idDialogNode);
+                        // console.log("  -> Child: [" + r + "] = " + dialogNodeChild.idDialogNode);
                     }
 
                     if (isDialogRoot) {
                         this.dialogTree.addDialogAsRoot(dialogNode);
-                        console.log("  -> IS ROOOOT: " + dialogNode + "(" + dialogNode.idDialogNode + ")");
                     }
                 }
             }
 
             showRootElem() {
                 var dialogNodeRoot = this.dialogTree.getTreeNode(null);
-
-                console.log("- Dialog ROOR: " + dialogNodeRoot);
-                console.log("- ID Dialog ROOR: " + dialogNodeRoot.idDialogNode);
-                console.log("- Sentence ROOT: [" + dialogNodeRoot.dialogSentence);
-                console.log("- ID Sentence ROOT: [" + dialogNodeRoot.idSentence + "] = " + dialogNodeRoot.textSentence);
-
                 this.uiDialogController.showDialogTreeNode(dialogNodeRoot, false, false);
             }
 
