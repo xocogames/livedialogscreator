@@ -55,6 +55,8 @@
             idDialogParent = null;
             dialogSentence = null;
             listDialogTreeReplies = [];
+            dialogConditionsText = null;
+            isValidDialogConditionsText = true;
 
             constructor(idDialogNode, dialogSentence) {
                 this.idDialogNode = idDialogNode;
@@ -76,8 +78,12 @@
                     replyOptions += jsonReply;
                 }
 
-                if (idDialogParent != null) strConditions = "\"conditionsAnd\": [{\"idDialogPrev\": \"" + idDialogParent + "\"}],";
-                else strConditions = "\"conditionsAnd\": [{\"NEXT\": \"\"}],";
+                if (this.dialogConditionsText == null) {
+                    if (idDialogParent != null) strConditions = "\"conditionsAnd\": [{\"idDialogPrev\": \"" + idDialogParent + "\"}],";
+                    else strConditions = "\"conditionsAnd\": [{\"NEXT\": \"\"}],";
+                } else {
+                    strConditions = "\"conditionsAnd\": " + this.dialogConditionsText + ",";
+                }
 
                 strRet = "{" + strConditions + "\"idDialogNode\": \"" + this.idDialogNode + "\", \"idDialogSentence\": \"" + this.dialogSentence.idSentence + "\", \"textSentence\": \"" + this.dialogSentence.textSentence + "\", " +
                     "\"replyOptions\": [" + replyOptions + "]" +
@@ -91,9 +97,12 @@
             listIdDialogTreeRoots = [];
             mapDialogTreeNodes = new Map();
 
+            // mapDialogConditions = new Map();
+
             clear() {
                 this.listIdDialogTreeRoots = [];
                 this.mapDialogTreeNodes = new Map();
+                // this.mapDialogConditions = new Map();
             }
 
             createDialogNode(idDialogNode, dialogSentence) {
@@ -182,6 +191,21 @@
                     } else return this.listIdDialogTreeRoots;
                 }
                 return [];
+            }
+
+            setDialogConditions(idDialogNode, conditionsText, isValidJson) {
+                // this.mapDialogConditions.set(idDialogNode, [conditionsText, isValidJson]);
+                var dialogTreeNode = this.getTreeNode(idDialogNode);
+                if (dialogTreeNode != null) {
+                    dialogTreeNode.dialogConditionsText = conditionsText;
+                    dialogTreeNode.isValidDialogConditionsText = isValidJson;
+                }
+            }
+
+            getDialogConditions(idDialogNode) {
+                var dialogTreeNode = this.getTreeNode(idDialogNode);
+                if (dialogTreeNode != null) return dialogTreeNode.dialogConditionsText;
+                // return this.mapDialogConditions.get(idDialogNode);
             }
         }
 
@@ -323,6 +347,9 @@
                 if (alignRight) divDialogNode.setAttribute("align", "right");
                 divCenter.appendChild(divDialogNode);
 
+                if (this.isValidDialogConditionsJson(dialogTreeNode.idDialogNode)) divDialogNode.style.color = "black";
+                else divDialogNode.style.color = "red";
+
                 divDialogNode.addEventListener('click', function(ev) {
                     if (ev.target) {
                         var divDialogNode = ev.target;
@@ -332,6 +359,9 @@
 
                         uiDialogController.removeDialogPanelTo(divDialogNode.id);
                         uiDialogController.showDialogTreeReplies(divDialogNode.id);
+
+                        var isJsonConditionsOk = uiDialogController.showDialogConditions(divDialogNode.id);
+                        if (!isJsonConditionsOk) uiDialogController.selectRedDialogTreeNode(divDialogNode.id);
                     }
                 });
             }
@@ -355,7 +385,8 @@
                 if (dialogTreeSelected != null) {
                     var divDialogNode = document.getElementById(dialogTreeSelected.idDialogNode);
                     if (divDialogNode != null) {
-                        divDialogNode.style.color = "black";
+                        if (this.isValidDialogConditionsJson(idDialogNode)) divDialogNode.style.color = "black";
+                        else divDialogNode.style.color = "red";
                     }
                 }
             }
@@ -367,13 +398,27 @@
                     if (idDialogBrother != idDialogNode) {
                         var divDialogBrother = document.getElementById(idDialogBrother);
                         if (divDialogBrother != null) {
-                            divDialogBrother.style.color = "black";
-                            divDialogBrother.style.fontWeight = "normal";
+                            if (this.isValidDialogConditionsJson(idDialogBrother)) {
+                                divDialogBrother.style.color = "black";
+                                divDialogBrother.style.fontWeight = "normal";
+                            } else {
+                                divDialogBrother.style.color = "red";
+                                divDialogBrother.style.fontWeight = "normal";
+                            }
                         }
                     }
                 }
             }
 
+            selectRedDialogTreeNode(idDialogNode) {
+                var dialogTreeRed = this.dialogTree.getTreeNode(idDialogNode);
+                if (dialogTreeRed != null) {
+                    var divDialogNode = document.getElementById(dialogTreeRed.idDialogNode);
+                    if (divDialogNode != null) {
+                        divDialogNode.style.color = "red";
+                    }
+                }
+            }
 
             buildLateralPanel(elemPanel, dialogSentence, alignRight) {
                 var idSentence = dialogSentence.idSentence;
@@ -442,6 +487,63 @@
                 }
             }
 
+            isValidDialogConditionsJson(idDialogNode) {
+                var dialogNode = this.dialogTree.getTreeNode(idDialogNode);
+                return dialogNode.isValidDialogConditionsText;
+            }
+
+            showDialogConditions(idDialogNode) {
+                console.log("showDialogConditions");
+                var conditionsArea = document.getElementById("areaConditions");
+                console.log(" - conditionsArea: " + conditionsArea);
+
+                var dialogNode = this.dialogTree.getTreeNode(idDialogNode);
+                if (dialogNode.dialogConditionsText != null) {
+                    console.log(" - conditionsText: " + dialogNode.dialogConditionsText);
+                    conditionsArea.value = dialogNode.dialogConditionsText;
+                    console.log(" - conditionsArea.value: " + conditionsArea.value);
+                    return dialogNode.isValidDialogConditionsText;
+                }
+                // conditionsArea.value = "[\n]";
+                this.showDialogConditionsDefault(conditionsArea, idDialogNode);
+                return true;
+            }
+
+            showDialogConditionsDefault(conditionsArea, idDialogNode) {
+                var dialogNode = this.dialogTree.getTreeNode(idDialogNode);
+                if (dialogNode != null) {
+                    if (dialogNode.idDialogParent == null) conditionsArea.value = "[\n   \{\"NEXT\": \"\"\}\n\]";
+                    else conditionsArea.value = "[\n   \{\"idDialogPrev\": \"" + dialogNode.idDialogParent + "\"\}\n\]";
+                }
+            }
+
+            storeDialogSelectedConditions() {
+                console.log("storeDialogSelectedConditions");
+                var conditionsText = document.getElementById("areaConditions").value;
+                console.log(" - conditionsText: " + conditionsText);
+                var isValidJson = false;
+                if (conditionsText != null && conditionsText.trim().length > 0) {
+                    if (isJson(conditionsText)) {
+                        console.log("SI que es un JSON valido");
+                        if (isValidJson = this.validateJsonConditions(conditionsText) == true) {
+                            console.log("Y además es un array");
+                        } else {
+                            console.log("¿Pero no es un array?");
+                        }
+                    } else {
+                        console.log("ERROR. NO es un JSON valido");
+                    }
+                    this.dialogTree.setDialogConditions(this.idDialogTreeNodeSelected, conditionsText, isValidJson);
+                    console.log(" - storedText: idDialogTreeNodeSelected = " + this.idDialogTreeNodeSelected);
+                }
+                document.getElementById("areaConditions").value = "";
+            }
+
+            validateJsonConditions(conditionsText) {
+                var jsonObjConditions = getJsonObject(conditionsText);
+                if (jsonObjConditions != null && Array.isArray(jsonObjConditions)) return true;
+                return false;
+            }
 
             // ********************************************************************************************************************* //
             // JSON Build
@@ -578,6 +680,11 @@
             uiDialogController.uiPanelSentencesPlayer.filterPanelSentences(inputText);
         }
 
+        function setSelectedConditionsText(event) {
+            // var conditionsText = document.getElementById("areaConditions").value;
+            uiDialogController.storeDialogSelectedConditions();
+        }
+
         function clearAll() {
             uiDialogController.clear();
         }
@@ -675,6 +782,13 @@
                         // console.log("  -> Child: [" + r + "] = " + dialogNodeChild.idDialogNode);
                     }
 
+                    var jsonDialogConditions = new JsonObjectParser().buildByObject(jsonDialogObj.getField("conditionsAnd"));
+                    if (jsonDialogConditions != null) {
+                        console.log("JSon Conditions. idDialogNode = " + idDialogElem + " / conditions = \n" + jsonDialogConditions);
+                        var conditionsText = JSON.stringify(jsonDialogConditions.objJson, undefined, 4);
+                        this.dialogTree.setDialogConditions(idDialogElem, conditionsText, true);
+                    }
+
                     if (isDialogRoot) {
                         this.dialogTree.addDialogAsRoot(dialogNode);
                     }
@@ -712,6 +826,23 @@
 
             var dialogBuilder = new DialogJsonBuilder(uiDialogController);
             dialogBuilder.buildDialogs(jsonContentLoaded);
+        }
+
+        function getJsonObject(str) {
+            try {
+                return JSON.parse(str);
+            } catch (e) { // Error: JSON is not okay
+                return null;
+            }
+        }
+
+        const isJson = (str) => {
+            try {
+                JSON.parse(str);
+            } catch (e) { // Error: JSON is not okay
+                return false;
+            }
+            return true;
         }
 
         class JsonObjectParser {
@@ -815,6 +946,16 @@
             </div>
             <p>
                 <input type="button" value="JSON" onclick="buildDialogJSON();">
+            </p>
+            <p>
+                <strong>Condiciones AND</strong> (ha de ser array):
+                <textarea id="areaConditions" name="areaConditions" rows="15" cols="75" onfocusout="setSelectedConditionsText(event)">[
+]
+                </textarea>
+            </p>
+            <p>
+                <strong>Acciones:</strong>
+                <textarea id="areaActions" name="areaActions" rows="10" cols="75"></textarea>
             </p>
         </div>
 
