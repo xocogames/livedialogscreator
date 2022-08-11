@@ -55,8 +55,12 @@
             idDialogParent = null;
             dialogSentence = null;
             listDialogTreeReplies = [];
+
             dialogConditionsText = null;
             isValidDialogConditionsText = true;
+
+            dialogActionsText = null;
+            isValidDialogActionsText = true;
 
             constructor(idDialogNode, dialogSentence) {
                 this.idDialogNode = idDialogNode;
@@ -71,6 +75,8 @@
                 let strRet = "";
                 let strConditions = "";
                 let replyOptions = "";
+                let strActions = "";
+
                 for (i = 0; i < this.listDialogTreeReplies.length; i++) {
                     let dialogReply = this.listDialogTreeReplies[i];
                     let jsonReply = "{" + "\"idDialogNode\": \"" + dialogReply.idDialogNode + "\", \"idDialogSentence\": \"" + dialogReply.dialogSentence.idSentence + "\", \"textSentence\": \"" + dialogReply.dialogSentence.textSentence + "\"}";
@@ -85,8 +91,12 @@
                     strConditions = "\"conditionsAnd\": " + this.dialogConditionsText + ",";
                 }
 
+                if (this.dialogActionsText != null) {
+                    strActions = ", \"actions\": " + this.dialogActionsText;
+                }
+
                 strRet = "{" + strConditions + "\"idDialogNode\": \"" + this.idDialogNode + "\", \"idDialogSentence\": \"" + this.dialogSentence.idSentence + "\", \"textSentence\": \"" + this.dialogSentence.textSentence + "\", " +
-                    "\"replyOptions\": [" + replyOptions + "]" +
+                    "\"replyOptions\": [" + replyOptions + "]" + strActions +
                     "}";
 
                 return strRet;
@@ -194,7 +204,6 @@
             }
 
             setDialogConditions(idDialogNode, conditionsText, isValidJson) {
-                // this.mapDialogConditions.set(idDialogNode, [conditionsText, isValidJson]);
                 var dialogTreeNode = this.getTreeNode(idDialogNode);
                 if (dialogTreeNode != null) {
                     dialogTreeNode.dialogConditionsText = conditionsText;
@@ -205,7 +214,19 @@
             getDialogConditions(idDialogNode) {
                 var dialogTreeNode = this.getTreeNode(idDialogNode);
                 if (dialogTreeNode != null) return dialogTreeNode.dialogConditionsText;
-                // return this.mapDialogConditions.get(idDialogNode);
+            }
+
+            setDialogActions(idDialogNode, actionsText, isValidJson) {
+                var dialogTreeNode = this.getTreeNode(idDialogNode);
+                if (dialogTreeNode != null) {
+                    dialogTreeNode.dialogActionsText = actionsText;
+                    dialogTreeNode.isValidDialogActionsText = isValidJson;
+                }
+            }
+
+            getDialogActions(idDialogNode) {
+                var dialogTreeNode = this.getTreeNode(idDialogNode);
+                if (dialogTreeNode != null) return dialogTreeNode.dialogActionsText;
             }
         }
 
@@ -347,7 +368,7 @@
                 if (alignRight) divDialogNode.setAttribute("align", "right");
                 divCenter.appendChild(divDialogNode);
 
-                if (this.isValidDialogConditionsJson(dialogTreeNode.idDialogNode)) divDialogNode.style.color = "black";
+                if (this.isValidDialogJson(dialogTreeNode.idDialogNode)) divDialogNode.style.color = "black";
                 else divDialogNode.style.color = "red";
 
                 divDialogNode.addEventListener('click', function(ev) {
@@ -362,6 +383,9 @@
 
                         var isJsonConditionsOk = uiDialogController.showDialogConditions(divDialogNode.id);
                         if (!isJsonConditionsOk) uiDialogController.selectRedDialogTreeNode(divDialogNode.id);
+
+                        var isJsonActionsOk = uiDialogController.showDialogActions(divDialogNode.id);
+                        if (!isJsonActionsOk) uiDialogController.selectRedDialogTreeNode(divDialogNode.id);
                     }
                 });
             }
@@ -385,7 +409,7 @@
                 if (dialogTreeSelected != null) {
                     var divDialogNode = document.getElementById(dialogTreeSelected.idDialogNode);
                     if (divDialogNode != null) {
-                        if (this.isValidDialogConditionsJson(idDialogNode)) divDialogNode.style.color = "black";
+                        if (this.isValidDialogJson(idDialogNode)) divDialogNode.style.color = "black";
                         else divDialogNode.style.color = "red";
                     }
                 }
@@ -398,7 +422,7 @@
                     if (idDialogBrother != idDialogNode) {
                         var divDialogBrother = document.getElementById(idDialogBrother);
                         if (divDialogBrother != null) {
-                            if (this.isValidDialogConditionsJson(idDialogBrother)) {
+                            if (this.isValidDialogJson(idDialogBrother)) {
                                 divDialogBrother.style.color = "black";
                                 divDialogBrother.style.fontWeight = "normal";
                             } else {
@@ -487,9 +511,18 @@
                 }
             }
 
+            isValidDialogJson(idDialogNode) {
+                return this.isValidDialogConditionsJson(idDialogNode) && this.isValidDialogActionsJson(idDialogNode);
+            }
+
             isValidDialogConditionsJson(idDialogNode) {
                 var dialogNode = this.dialogTree.getTreeNode(idDialogNode);
                 return dialogNode.isValidDialogConditionsText;
+            }
+
+            isValidDialogActionsJson(idDialogNode) {
+                var dialogNode = this.dialogTree.getTreeNode(idDialogNode);
+                return dialogNode.isValidDialogActionsText;
             }
 
             showDialogConditions(idDialogNode) {
@@ -509,6 +542,22 @@
                 return true;
             }
 
+            showDialogActions(idDialogNode) {
+                console.log("showDialogActions");
+                var actionsArea = document.getElementById("areaActions");
+                console.log(" - actionsArea: " + actionsArea);
+
+                var dialogNode = this.dialogTree.getTreeNode(idDialogNode);
+                if (dialogNode.dialogActionsText != null) {
+                    console.log(" - dialogActionsText: " + dialogNode.dialogActionsText);
+                    actionsArea.value = dialogNode.dialogActionsText;
+                    console.log(" - actionsArea.value: " + actionsArea.value);
+                    return dialogNode.isValidDialogActionsText;
+                }
+                actionsArea.value = "";
+                return true;
+            }
+
             showDialogConditionsDefault(conditionsArea, idDialogNode) {
                 var dialogNode = this.dialogTree.getTreeNode(idDialogNode);
                 if (dialogNode != null) {
@@ -525,7 +574,7 @@
                 if (conditionsText != null && conditionsText.trim().length > 0) {
                     if (isJson(conditionsText)) {
                         console.log("SI que es un JSON valido");
-                        if (isValidJson = this.validateJsonConditions(conditionsText) == true) {
+                        if (isValidJson = this.validateJsonArray(conditionsText) == true) {
                             console.log("Y además es un array");
                         } else {
                             console.log("¿Pero no es un array?");
@@ -539,9 +588,31 @@
                 document.getElementById("areaConditions").value = "";
             }
 
-            validateJsonConditions(conditionsText) {
-                var jsonObjConditions = getJsonObject(conditionsText);
-                if (jsonObjConditions != null && Array.isArray(jsonObjConditions)) return true;
+            storeDialogSelectedActions() {
+                console.log("storeDialogSelectedActions");
+                var actionsText = document.getElementById("areaActions").value;
+                console.log(" - actionsText: " + actionsText);
+                var isValidJson = false;
+                if (actionsText != null && actionsText.trim().length > 0) {
+                    if (isJson(actionsText)) {
+                        console.log("SI que es un JSON valido");
+                        if (isValidJson = this.validateJsonArray(actionsText) == true) {
+                            console.log("Y además es un array");
+                        } else {
+                            console.log("¿Pero no es un array?");
+                        }
+                    } else {
+                        console.log("ERROR. NO es un JSON valido");
+                    }
+                    this.dialogTree.setDialogActions(this.idDialogTreeNodeSelected, actionsText, isValidJson);
+                    console.log(" - storedText: idDialogTreeNodeSelected = " + this.idDialogTreeNodeSelected);
+                }
+                document.getElementById("areaActions").value = "";
+            }
+
+            validateJsonArray(jsonArrayText) {
+                var jsonObjArray = getJsonObject(jsonArrayText);
+                if (jsonObjArray != null && Array.isArray(jsonObjArray)) return true;
                 return false;
             }
 
@@ -683,6 +754,11 @@
         function setSelectedConditionsText(event) {
             // var conditionsText = document.getElementById("areaConditions").value;
             uiDialogController.storeDialogSelectedConditions();
+        }
+
+        function setSelectedActionsText(event) {
+            // var conditionsText = document.getElementById("areaConditions").value;
+            uiDialogController.storeDialogSelectedActions();
         }
 
         function clearAll() {
@@ -949,13 +1025,13 @@
             </p>
             <p>
                 <strong>Condiciones AND</strong> (ha de ser array):
-                <textarea id="areaConditions" name="areaConditions" rows="15" cols="75" onfocusout="setSelectedConditionsText(event)">[
-]
-                </textarea>
+                <textarea id="areaConditions" name="areaConditions" rows="15" cols="75" placeholder="[
+]" onfocusout="setSelectedConditionsText(event)"></textarea>
             </p>
             <p>
-                <strong>Acciones:</strong>
-                <textarea id="areaActions" name="areaActions" rows="10" cols="75"></textarea>
+                <strong>Acciones:</strong> (ha de ser array):
+                <textarea id="areaActions" name="areaActions" rows="10" cols="75" placeholder="[
+]" onfocusout="setSelectedActionsText(event)"></textarea>
             </p>
         </div>
 
