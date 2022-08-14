@@ -1,0 +1,454 @@
+{
+    "dialogSW": "www.livedialogs.com",
+    "dialogVersion": "0.0.1",
+    "refPrj": "",
+    "versionPrj": "0.0.1",
+    "page": "",
+    "refActorNpg": "Hellen",
+    "refActorPlayer": "Ramoncín",
+    "npgSentences": [
+        {
+            "id": "5254a5e1-0bb9-434c-9c82-d224b1114f99",
+            "text": "Hola! Tu debes ser ${playername}, bienvenido al pueblo"
+        },
+        {
+            "id": "69018afb-f776-42c3-abe1-d9a928d43a0f",
+            "text": "La noticia de tu llegada ha corrido muy rápido. ¿Dónde te alojas?"
+        },
+        {
+            "id": "1309ba59-cdf1-4d79-b6d2-16844839d6fe",
+            "text": "Huye de ahí, es un lugar peligroso"
+        },
+        {
+            "id": "3508a1ff-b608-4a58-aa88-f511c4bae243",
+            "text": "Prueba en la posada de Ming"
+        },
+        {
+            "id": "5760bb0a-075e-4b7f-949e-0a00823d8238",
+            "text": "Escucha, todo en esa casa es peligroso. Elvira es peligrosa, su padre lo es, Ulises, todo…"
+        },
+        {
+            "id": "ed52ecdf-b95c-409c-a8e8-ec5846056921",
+            "text": "Soy ${ACTOR}, encantada"
+        },
+        {
+            "id": "65c575d8-5e17-4309-a374-34ec6e22cf03",
+            "text": "Hola de nuevo ${PLAYER}"
+        },
+        {
+            "id": "ca04d396-40e1-4146-a04d-21667148bff2",
+            "text": "Dime ${PLAYER}"
+        },
+        {
+            "id": "5f15bcb2-627e-4c80-966d-065669f66a59",
+            "text": "Perfecto, es pequeña, pero estarás bien ahí"
+        },
+        {
+            "id": "d27d32cf-f850-46de-88c4-59a60059acde",
+            "text": "Salir... Lo siento mucho ${PLAYER}, pero no se puede salir de este maldito pueblo"
+        }
+    ],
+    "playerSentences": [
+        {
+            "id": "48e2cb82-6e59-4021-bc26-30af9b793850",
+            "text": "¿Me conoces?"
+        },
+        {
+            "id": "74feabe8-f948-4fb7-b2ec-732bf98aa1a2",
+            "text": "En la posada de Elvira"
+        },
+        {
+            "id": "6b07ec9b-2aae-4904-a1bc-2c119ab21ca1",
+            "text": "En ningún sitio aun"
+        },
+        {
+            "id": "ec498c21-bccc-40bc-a672-62cc0ed8e6f0",
+            "text": "¿Y donde voy?"
+        },
+        {
+            "id": "d8fc0bce-8246-4bed-aaa3-8cc01465977e",
+            "text": "¿Porqué?"
+        },
+        {
+            "id": "29530b79-2c9e-493d-8098-4d53c14bf38a",
+            "text": "En la posada de Ming"
+        },
+        {
+            "id": "e2a89aa8-004a-4a85-aa6e-42a7b8020448",
+            "text": "¿Y tú quién eres?"
+        },
+        {
+            "id": "1368bba0-8738-4ec7-8c94-a57e9ff4fb9e",
+            "text": "Creo que es mejor la posada de Elvira, ¿no te parece?"
+        },
+        {
+            "id": "537106b7-acc3-4bed-bbd7-50c7e3505dd1",
+            "text": "Me he perdido en este pueblo ¿Cómo puedo salir?"
+        }
+    ],
+    "npgDialog": [
+        {
+            "conditionsAnd": [
+                {
+                    "FIRST": ""
+                }
+            ],
+            "idDialogNode": "fe627b91-1abf-48d2-9169-b225cd761754",
+            "idDialogSentence": "5254a5e1-0bb9-434c-9c82-d224b1114f99",
+            "textSentence": "Hola! Tu debes ser ${playername}, bienvenido al pueblo",
+            "replyOptions": [
+                {
+                    "idDialogNode": "80bc812f-4f9f-4c22-b6ca-460c8f0a557e",
+                    "idDialogSentence": "48e2cb82-6e59-4021-bc26-30af9b793850",
+                    "textSentence": "¿Me conoces?"
+                },
+                {
+                    "idDialogNode": "14ef1283-607d-4d05-8f4b-72475491ba7c",
+                    "idDialogSentence": "e2a89aa8-004a-4a85-aa6e-42a7b8020448",
+                    "textSentence": "¿Y tú quién eres?"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "NEXT": ""
+                },
+                {
+                    "timeAgo": 10
+                }
+            ],
+            "idDialogNode": "94ecdfe7-0f54-40ca-b442-a5f24e733ab3",
+            "idDialogSentence": "65c575d8-5e17-4309-a374-34ec6e22cf03",
+            "textSentence": "Hola de nuevo ${PLAYER}",
+            "replyOptions": []
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "NEXT": ""
+                }
+            ],
+            "idDialogNode": "118a04f9-8674-4c5f-87fa-554653a4cbf0",
+            "idDialogSentence": "ca04d396-40e1-4146-a04d-21667148bff2",
+            "textSentence": "Dime ${PLAYER}",
+            "replyOptions": []
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "80bc812f-4f9f-4c22-b6ca-460c8f0a557e"
+                }
+            ],
+            "idDialogNode": "6ad0714d-5878-468b-ba61-c05bf84e12a6",
+            "idDialogSentence": "69018afb-f776-42c3-abe1-d9a928d43a0f",
+            "textSentence": "La noticia de tu llegada ha corrido muy rápido. ¿Dónde te alojas?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "6dd26950-2db5-4517-a484-bd56b6ac49f4",
+                    "idDialogSentence": "74feabe8-f948-4fb7-b2ec-732bf98aa1a2",
+                    "textSentence": "En la posada de Elvira"
+                },
+                {
+                    "idDialogNode": "3a65d6bf-1f33-42af-93e2-87b5e53e9b5c",
+                    "idDialogSentence": "6b07ec9b-2aae-4904-a1bc-2c119ab21ca1",
+                    "textSentence": "En ningún sitio aun"
+                },
+                {
+                    "idDialogNode": "972840ce-2fe0-419c-a2fc-a6ec01d456be",
+                    "idDialogSentence": "29530b79-2c9e-493d-8098-4d53c14bf38a",
+                    "textSentence": "En la posada de Ming"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "14ef1283-607d-4d05-8f4b-72475491ba7c"
+                }
+            ],
+            "idDialogNode": "78a061f7-fd44-4944-94b5-13b71e3d519c",
+            "idDialogSentence": "ed52ecdf-b95c-409c-a8e8-ec5846056921",
+            "textSentence": "Soy ${ACTOR}, encantada",
+            "replyOptions": [
+                {
+                    "idDialogNode": "ac84708d-9db6-46fe-bd28-d3b7daa5a4c1",
+                    "idDialogSentence": "537106b7-acc3-4bed-bbd7-50c7e3505dd1",
+                    "textSentence": "Me he perdido en este pueblo ¿Cómo puedo salir?"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "6dd26950-2db5-4517-a484-bd56b6ac49f4"
+                }
+            ],
+            "idDialogNode": "127706e1-10f5-4bd4-a4d3-f705d6751d0a",
+            "idDialogSentence": "1309ba59-cdf1-4d79-b6d2-16844839d6fe",
+            "textSentence": "Huye de ahí, es un lugar peligroso",
+            "replyOptions": [
+                {
+                    "idDialogNode": "577657d2-81ea-4e00-973d-f34b80725099",
+                    "idDialogSentence": "ec498c21-bccc-40bc-a672-62cc0ed8e6f0",
+                    "textSentence": "¿Y donde voy?"
+                },
+                {
+                    "idDialogNode": "755dbd59-7007-475e-bedc-9afb60f4fa83",
+                    "idDialogSentence": "d8fc0bce-8246-4bed-aaa3-8cc01465977e",
+                    "textSentence": "¿Porqué?"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "3a65d6bf-1f33-42af-93e2-87b5e53e9b5c"
+                }
+            ],
+            "idDialogNode": "5d92d98c-3cde-4029-9ce7-d0427a6e12f4",
+            "idDialogSentence": "3508a1ff-b608-4a58-aa88-f511c4bae243",
+            "textSentence": "Prueba en la posada de Ming",
+            "replyOptions": []
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "972840ce-2fe0-419c-a2fc-a6ec01d456be"
+                }
+            ],
+            "idDialogNode": "9b65dcfc-babc-4125-804c-1393760c267d",
+            "idDialogSentence": "5f15bcb2-627e-4c80-966d-065669f66a59",
+            "textSentence": "Perfecto, es pequeña, pero estarás bien ahí",
+            "replyOptions": []
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "577657d2-81ea-4e00-973d-f34b80725099"
+                }
+            ],
+            "idDialogNode": "ccb1ac53-6ed9-4943-8a3b-3f1da7c291e6",
+            "idDialogSentence": "3508a1ff-b608-4a58-aa88-f511c4bae243",
+            "textSentence": "Prueba en la posada de Ming",
+            "replyOptions": [
+                {
+                    "idDialogNode": "cc26bd37-10e9-4d46-9359-5d03bb69aca4",
+                    "idDialogSentence": "1368bba0-8738-4ec7-8c94-a57e9ff4fb9e",
+                    "textSentence": "Creo que es mejor la posada de Elvira, ¿no te parece?"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "755dbd59-7007-475e-bedc-9afb60f4fa83"
+                }
+            ],
+            "idDialogNode": "0c840501-5807-4ca6-937c-66ad72085788",
+            "idDialogSentence": "5760bb0a-075e-4b7f-949e-0a00823d8238",
+            "textSentence": "Escucha, todo en esa casa es peligroso. Elvira es peligrosa, su padre lo es, Ulises, todo…",
+            "replyOptions": []
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "ac84708d-9db6-46fe-bd28-d3b7daa5a4c1"
+                }
+            ],
+            "idDialogNode": "b4833612-d0d3-416d-b529-5941b0ab2acb",
+            "idDialogSentence": "d27d32cf-f850-46de-88c4-59a60059acde",
+            "textSentence": "Salir... Lo siento mucho ${PLAYER}, pero no se puede salir de este maldito pueblo",
+            "replyOptions": []
+        }
+    ],
+    "playerDialog": [
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "fe627b91-1abf-48d2-9169-b225cd761754"
+                }
+            ],
+            "idDialogNode": "80bc812f-4f9f-4c22-b6ca-460c8f0a557e",
+            "idDialogSentence": "48e2cb82-6e59-4021-bc26-30af9b793850",
+            "textSentence": "¿Me conoces?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "6ad0714d-5878-468b-ba61-c05bf84e12a6",
+                    "idDialogSentence": "69018afb-f776-42c3-abe1-d9a928d43a0f",
+                    "textSentence": "La noticia de tu llegada ha corrido muy rápido. ¿Dónde te alojas?"
+                }
+            ],
+            "actions": [
+                {
+                    "refAction": "incVarValue",
+                    "name": "affinity",
+                    "value": 2
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "fe627b91-1abf-48d2-9169-b225cd761754"
+                }
+            ],
+            "idDialogNode": "14ef1283-607d-4d05-8f4b-72475491ba7c",
+            "idDialogSentence": "e2a89aa8-004a-4a85-aa6e-42a7b8020448",
+            "textSentence": "¿Y tú quién eres?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "78a061f7-fd44-4944-94b5-13b71e3d519c",
+                    "idDialogSentence": "ed52ecdf-b95c-409c-a8e8-ec5846056921",
+                    "textSentence": "Soy ${ACTOR}, encantada"
+                }
+            ],
+            "actions": [
+                {
+                    "refAction": "incVarValue",
+                    "name": "affinity",
+                    "value": 5
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "6ad0714d-5878-468b-ba61-c05bf84e12a6"
+                }
+            ],
+            "idDialogNode": "6dd26950-2db5-4517-a484-bd56b6ac49f4",
+            "idDialogSentence": "74feabe8-f948-4fb7-b2ec-732bf98aa1a2",
+            "textSentence": "En la posada de Elvira",
+            "replyOptions": [
+                {
+                    "idDialogNode": "127706e1-10f5-4bd4-a4d3-f705d6751d0a",
+                    "idDialogSentence": "1309ba59-cdf1-4d79-b6d2-16844839d6fe",
+                    "textSentence": "Huye de ahí, es un lugar peligroso"
+                }
+            ],
+            "actions": [
+                {
+                    "refAction": "setVarValue",
+                    "name": "posada",
+                    "value": "elvira"
+                },
+                {
+                    "refAction": "incVarValue",
+                    "name": "affinity",
+                    "value": -1
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "6ad0714d-5878-468b-ba61-c05bf84e12a6"
+                }
+            ],
+            "idDialogNode": "3a65d6bf-1f33-42af-93e2-87b5e53e9b5c",
+            "idDialogSentence": "6b07ec9b-2aae-4904-a1bc-2c119ab21ca1",
+            "textSentence": "En ningún sitio aun",
+            "replyOptions": [
+                {
+                    "idDialogNode": "5d92d98c-3cde-4029-9ce7-d0427a6e12f4",
+                    "idDialogSentence": "3508a1ff-b608-4a58-aa88-f511c4bae243",
+                    "textSentence": "Prueba en la posada de Ming"
+                }
+            ],
+            "actions": [
+                {
+                    "refAction": "incVarValue",
+                    "name": "affinity",
+                    "value": 5
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "6ad0714d-5878-468b-ba61-c05bf84e12a6"
+                }
+            ],
+            "idDialogNode": "972840ce-2fe0-419c-a2fc-a6ec01d456be",
+            "idDialogSentence": "29530b79-2c9e-493d-8098-4d53c14bf38a",
+            "textSentence": "En la posada de Ming",
+            "replyOptions": [
+                {
+                    "idDialogNode": "9b65dcfc-babc-4125-804c-1393760c267d",
+                    "idDialogSentence": "5f15bcb2-627e-4c80-966d-065669f66a59",
+                    "textSentence": "Perfecto, es pequeña, pero estarás bien ahí"
+                }
+            ],
+            "actions": [
+                {
+                    "refAction": "setVarValue",
+                    "name": "posada",
+                    "value": "ming"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "78a061f7-fd44-4944-94b5-13b71e3d519c"
+                }
+            ],
+            "idDialogNode": "ac84708d-9db6-46fe-bd28-d3b7daa5a4c1",
+            "idDialogSentence": "537106b7-acc3-4bed-bbd7-50c7e3505dd1",
+            "textSentence": "Me he perdido en este pueblo ¿Cómo puedo salir?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "b4833612-d0d3-416d-b529-5941b0ab2acb",
+                    "idDialogSentence": "d27d32cf-f850-46de-88c4-59a60059acde",
+                    "textSentence": "Salir... Lo siento mucho ${PLAYER}, pero no se puede salir de este maldito pueblo"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "127706e1-10f5-4bd4-a4d3-f705d6751d0a"
+                }
+            ],
+            "idDialogNode": "577657d2-81ea-4e00-973d-f34b80725099",
+            "idDialogSentence": "ec498c21-bccc-40bc-a672-62cc0ed8e6f0",
+            "textSentence": "¿Y donde voy?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "ccb1ac53-6ed9-4943-8a3b-3f1da7c291e6",
+                    "idDialogSentence": "3508a1ff-b608-4a58-aa88-f511c4bae243",
+                    "textSentence": "Prueba en la posada de Ming"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "127706e1-10f5-4bd4-a4d3-f705d6751d0a"
+                }
+            ],
+            "idDialogNode": "755dbd59-7007-475e-bedc-9afb60f4fa83",
+            "idDialogSentence": "d8fc0bce-8246-4bed-aaa3-8cc01465977e",
+            "textSentence": "¿Porqué?",
+            "replyOptions": [
+                {
+                    "idDialogNode": "0c840501-5807-4ca6-937c-66ad72085788",
+                    "idDialogSentence": "5760bb0a-075e-4b7f-949e-0a00823d8238",
+                    "textSentence": "Escucha, todo en esa casa es peligroso. Elvira es peligrosa, su padre lo es, Ulises, todo…"
+                }
+            ]
+        },
+        {
+            "conditionsAnd": [
+                {
+                    "idDialogPrev": "ccb1ac53-6ed9-4943-8a3b-3f1da7c291e6"
+                }
+            ],
+            "idDialogNode": "cc26bd37-10e9-4d46-9359-5d03bb69aca4",
+            "idDialogSentence": "1368bba0-8738-4ec7-8c94-a57e9ff4fb9e",
+            "textSentence": "Creo que es mejor la posada de Elvira, ¿no te parece?",
+            "replyOptions": []
+        }
+    ]
+}

@@ -181,6 +181,10 @@
                 return dialogTreeNode;
             }
 
+            getListIdsDialogRoots() {
+                return this.listIdDialogTreeRoots;
+            }
+
             getListIdsDialogTreeReplies(idDialogNode) {
                 var listIdsDialogReplies = [];
 
@@ -321,6 +325,14 @@
             resetDialog() {
                 ulElemActor.innerHTML = '';
                 ulElemPlayer.innerHTML = '';
+            }
+
+            setRefActorNpg(refActor) {
+                document.getElementById("text-npgActor").value = refActor;
+            }
+
+            setRefActorPlayer(refActor) {
+                document.getElementById("text-playerActor").value = refActor;
             }
 
             createNpgPanelSentence(text) {
@@ -787,14 +799,24 @@
             }
 
             buildDialogs(jsonContent) {
+
+                uiDialogController.uiPanelSentencesNpg.clear();
+                uiDialogController.uiPanelSentencesPlayer.clear();
+
                 this.jsonObjContent = new JsonObjectParser();
                 this.jsonObjContent.buildByJson(jsonContent);
 
+                this.buildActors();
                 this.buildDialogSentences();
                 this.buildDialogActor("npgDialog");
                 this.buildDialogActor("playerDialog");
 
                 this.showRootElem();
+            }
+
+            buildActors() {
+                uiDialogController.setRefActorNpg(this.jsonObjContent.getField("refActorNpg"));
+                uiDialogController.setRefActorPlayer(this.jsonObjContent.getField("refActorPlayer"));
             }
 
             buildDialogSentences() {
@@ -843,7 +865,8 @@
                     var jsonDialogConditions = new JsonObjectParser().buildByObject(jsonDialogObj.getField("conditionsAnd"));
                     if (jsonDialogConditions != null) {
                         var jsonConditionFirst = new JsonObjectParser().buildByObject(jsonDialogConditions.getArrayObjects()[0]);
-                        isDialogRoot = jsonConditionFirst.containsField("NEXT");
+                        isDialogRoot = jsonConditionFirst.containsField("FIRST");
+                        if (!isDialogRoot) isDialogRoot = jsonConditionFirst.containsField("NEXT");
                     }
 
                     var jsonDialogReplies = new JsonObjectParser().buildByObject(jsonDialogObj.getField("replyOptions"));
@@ -865,6 +888,16 @@
                         this.dialogTree.setDialogConditions(idDialogElem, conditionsText, true);
                     }
 
+                    var fieldActions = jsonDialogObj.getField("actions");
+                    if (fieldActions != null) {
+                        var jsonDialogActions = new JsonObjectParser().buildByObject(fieldActions);
+                        if (jsonDialogActions != null) {
+                            console.log("JSon Actions. idDialogNode = " + idDialogElem + " / actions = \n" + jsonDialogActions);
+                            var actionsText = JSON.stringify(jsonDialogActions.objJson, undefined, 4);
+                            this.dialogTree.setDialogActions(idDialogElem, actionsText, true);
+                        }
+                    }
+
                     if (isDialogRoot) {
                         this.dialogTree.addDialogAsRoot(dialogNode);
                     }
@@ -872,8 +905,15 @@
             }
 
             showRootElem() {
-                var dialogNodeRoot = this.dialogTree.getTreeNode(null);
-                this.uiDialogController.showDialogTreeNode(dialogNodeRoot, false, false);
+                // var dialogNodeRoot = this.dialogTree.getTreeNode(null);
+                // this.uiDialogController.showDialogTreeNode(dialogNodeRoot, false, false);
+
+                var idDialogRoot = null;
+                var listIdsDialogRoots = this.dialogTree.getListIdsDialogRoots();
+                for (var idx = 0; idx < listIdsDialogRoots.length; idx++) {
+                    var dialogNodeRoot = this.dialogTree.getTreeNode(listIdsDialogRoots[idx]);
+                    this.uiDialogController.showDialogTreeNode(dialogNodeRoot, false, false);
+                }
             }
 
             getSentence(refActor, idSentence) {
